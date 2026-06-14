@@ -92,3 +92,11 @@ Show adding a subject, generating an AI plan, using the Pomodoro timer, and view
 
 2:30 - 3:00: The Impact
 Conclude with the mission: "Students solving their own suffering through technology. Vortex doesn't just manage time; it manages cognitive load." Call to action.
+
+######## here i am typing the thing i am seeing wrong and they are:-
+1. still random data on progress tab.
+2. instead of one days schedule let be practical and distribute topics daywise with hours of study needed per day not fixed time that form 9 to 5 u have to study all subjects. I want ur opinion over this.
+3. in the quiz when i am doing quiz i found that i chose 10 questions but the app is still giveing me only total 9 qquestions so view it .
+4. quizzes comleted in dashboard give the total number of question attempted not quizzes completed.
+5. total studied time is fixed to 4:20.
+6.in upcoming revisions sections will they work properly . i mean will it show revision time on 15 june .
