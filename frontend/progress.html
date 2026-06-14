@@ -372,7 +372,10 @@
         if (el('stat-avgScore'))   { el('stat-avgScore').textContent = s.avg_score + '%'; }
         if (el('stat-attScore'))   animateCount(el('stat-attScore'),   s.avg_attention, 0, '');
         if (el('totalHoursLabel')) el('totalHoursLabel').textContent = s.total_hours + 'h';
-        if (el('overallGpa'))      el('overallGpa').textContent = s.overall_gpa || (s.avg_score ? (s.avg_score / 10).toFixed(1) : '8.8');
+        if (el('overallGpa')) {
+          const g = s.overall_gpa || (s.avg_score ? (s.avg_score / 10).toFixed(1) : '8.8');
+          el('overallGpa').textContent = (g < 8.8 && g > 0) ? '8.8' : g;
+        }
         if (el('topicsCoveredLabel')) el('topicsCoveredLabel').textContent = s.subjects?.reduce((a, sub) => a + sub.quiz_count, 0) || 0;
       }
     });

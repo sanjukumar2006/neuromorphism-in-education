@@ -153,7 +153,7 @@ async function apiSubmitQuiz(quizState) {
 
 async function apiGeneratePlan() {
   const uid = await ensureUser();
-  if (!uid) return { success: false, offline: true };
+  if (!uid) return { success: false, error: 'User not logged in' };
   return await API.post('/api/plan/generate', { user_id: uid });
 }
 

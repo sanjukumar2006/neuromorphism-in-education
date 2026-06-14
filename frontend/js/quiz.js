@@ -724,20 +724,4 @@ function updateSidebarStats() {
   if (document.getElementById('bestStreak'))     document.getElementById('bestStreak').textContent     = bestStr;
 }
 
-function renderLeaderboard() {
-  const lb = document.getElementById('leaderboard');
-  if (!lb) return;
-  const leaders = [
-    { name: 'You',    xp: Store.get('total_xp', 1240), avatar: 'S', rank: 1 },
-    { name: 'Alex',   xp: 980,  avatar: 'A', rank: 2 },
-    { name: 'Priya',  xp: 850,  avatar: 'P', rank: 3 },
-  ];
-  lb.innerHTML = leaders.map((l, i) => `
-    <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:${i===0?'rgba(108,99,255,0.1)':'transparent'};border-radius:var(--radius-md);">
-      <span style="font-size:0.8rem;font-weight:800;color:var(--text-muted);width:16px;">${l.rank}</span>
-      <div style="width:26px;height:26px;border-radius:50%;background:var(--grad-purple);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;">${l.avatar}</div>
-      <span style="flex:1;font-size:0.8rem;font-weight:600;${i===0?'color:var(--accent)':''}">${l.name}</span>
-      <span style="font-size:0.72rem;color:var(--text-muted);">${l.xp.toLocaleString()}</span>
-    </div>`
-  ).join('');
-}
+function renderLeaderboard() {}

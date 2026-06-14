@@ -428,9 +428,15 @@
         container.style.display = 'block';
         showToast('🤖 AI plan generated!', 'success', '⚡');
       } else {
-        container.innerHTML = `<div style="color:var(--text-muted);font-size:0.875rem;padding:16px;text-align:center;">
-          ⚡ Start backend server (<code>python run.py</code>) to generate AI plans.
-        </div>`;
+        if (res && res.error === 'User not logged in') {
+          container.innerHTML = `<div style="color:var(--text-muted);font-size:0.875rem;padding:16px;text-align:center;">
+            ⚡ Please <a href="index.html" style="color:var(--accent);">log in</a> to generate AI plans.
+          </div>`;
+        } else {
+          container.innerHTML = `<div style="color:var(--text-muted);font-size:0.875rem;padding:16px;text-align:center;">
+            ⚡ Start backend server (<code>python run.py</code>) to generate AI plans.
+          </div>`;
+        }
         container.style.display = 'block';
       }
     }
