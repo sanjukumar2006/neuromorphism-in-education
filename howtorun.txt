@@ -8,3 +8,8 @@ in terminal the root dir of this folder past this
 
 python -m http.server 8080 --directory frontend
 
+
+if this does not work  do this 
+
+frist run "run.py"
+then open index.html as "open with live server"
