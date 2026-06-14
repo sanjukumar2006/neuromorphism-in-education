@@ -1,0 +1,3 @@
+Adaptive Study Planner Based on Learning Patterns
+Create a system that adjusts study recommendations based on attention span, mistakes, and revision habits. Students solving their own suffering through technology
+

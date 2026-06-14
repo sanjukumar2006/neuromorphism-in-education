@@ -5,6 +5,13 @@
 
 ---
 
+## problem statement 
+
+Adaptive Study Planner Based on Learning Patterns
+Create a system that adjusts study recommendations based on attention span, mistakes, and revision habits. Students solving their own suffering through technology
+
+
+
 ## 🧠 The Neuromorphic Philosophy & Concept
 
 Vortex applies **Neuromorphism**—systems inspired by the structure and function of the human brain—across two critical dimensions:
