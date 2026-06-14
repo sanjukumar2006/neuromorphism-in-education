@@ -151,7 +151,7 @@
       <div style="padding:4px 8px;display:flex;flex-direction:column;gap:10px;">
         <div class="flex items-center justify-between">
           <span style="font-size:0.8rem;color:var(--text-muted);">Overall GPA</span>
-          <span style="font-weight:700;color:var(--accent);" id="overallGpa">3.8</span>
+          <span style="font-weight:700;color:var(--accent);" id="overallGpa">8.8</span>
         </div>
         <div class="flex items-center justify-between">
           <span style="font-size:0.8rem;color:var(--text-muted);">Study Hours</span>
@@ -203,7 +203,7 @@
           <div class="card stat-card">
             <div class="stat-icon" style="background:rgba(67,233,123,0.1);">✅</div>
             <div class="stat-value grad-text-green count-up" id="stat-quizzes">0</div>
-            <div class="stat-label">Quizzes Completed</div>
+            <div class="stat-label">Question Completed</div>
             <span class="stat-change up">↑ 8 this week</span>
           </div>
           <div class="card stat-card">
@@ -372,7 +372,7 @@
         if (el('stat-avgScore'))   { el('stat-avgScore').textContent = s.avg_score + '%'; }
         if (el('stat-attScore'))   animateCount(el('stat-attScore'),   s.avg_attention, 0, '');
         if (el('totalHoursLabel')) el('totalHoursLabel').textContent = s.total_hours + 'h';
-        if (el('overallGpa'))      el('overallGpa').textContent = Math.min(4, (s.avg_score / 25)).toFixed(1);
+        if (el('overallGpa'))      el('overallGpa').textContent = '8.8';
         if (el('topicsCoveredLabel')) el('topicsCoveredLabel').textContent = s.subjects?.reduce((a, sub) => a + sub.quiz_count, 0) || 0;
       }
     });

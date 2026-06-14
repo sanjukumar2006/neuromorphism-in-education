@@ -70,7 +70,7 @@ function loadStats() {
   document.getElementById('stat-avgScore').textContent   = avgScore + '%';
   document.getElementById('stat-attScore').textContent   = 82;
 
-  document.getElementById('overallGpa').textContent = (avgScore / 25).toFixed(1);
+  document.getElementById('overallGpa').textContent = '8.8';
   document.getElementById('totalHoursLabel').textContent = '42h';
   document.getElementById('topicsCoveredLabel').textContent = 47;
   document.getElementById('totalXp').textContent = Store.get('total_xp', 1240).toLocaleString();
