@@ -1,0 +1,94 @@
+=========================================================
+      VORTEX - ADAPTIVE STUDY PLANNER
+=========================================================
+Video Presentation Script & Project Blueprint
+Theme: "Students solving their own suffering through technology"
+
+---
+
+1. INTRODUCTION & CORE CONCEPT
+=========================================================
+What is Vortex? 
+Vortex is an AI-powered adaptive study planner designed to eliminate student burnout and optimize learning efficiency. Instead of rigid, static timetables that students inevitably fail to follow, Vortex creates a dynamic, fluid study schedule that adapts to the student's actual cognitive state, performance, and attention span.
+
+How it tackles the core question:
+"Adaptive Study Planner Based on Learning Patterns: Create a system that adjusts study recommendations based on attention span, mistakes, and revision habits."
+
+Vortex directly solves this by tracking:
+- Attention Span: Using built-in Pomodoro/study timers and tracking how long a student can focus before performance drops.
+- Mistakes: The Quiz Engine tracks wrong answers and feeds them into the Mistake Analysis module, identifying weak topics.
+- Revision Habits: The Revision Engine uses Spaced Repetition to bring back topics just as the student is about to forget them.
+Through this continuous feedback loop, Vortex dynamically reschedules study blocks to ensure maximum retention with minimum suffering.
+
+---
+
+2. NEUROMORPHISM IN VORTEX
+=========================================================
+How does it use Neuromorphism?
+Neuromorphism refers to systems that mimic the neural structure and functioning of the human brain. 
+
+In Vortex, Neuromorphism is applied in two ways:
+1. Algorithmic (Brain-Inspired AI): The Recommendation Engine uses "Learning Scores" and "Priority Calculators" that mimic synaptic plasticity. Just like neurons strengthen connections through repeated firing, Vortex strengthens a topic's "priority" when a student struggles, and weakens the priority (pushes it further into the future) when mastery is achieved. It literally mimics human memory decay curves.
+2. Interface Design (Neumorphism UI): The frontend is designed with deep, fluid aesthetics (ambient glows, soft glassmorphism, gradient accents). This reduces cognitive load and visual stress, creating a calming environment that contrasts the anxiety typically associated with studying.
+
+---
+
+3. COMPREHENSIVE FEATURE BREAKDOWN
+=========================================================
+What every feature does:
+
+A. Dashboard (The Brain Center)
+- What it does: Provides a high-level overview of the student's progress.
+- Details: Shows active streaks, upcoming deadlines, current overall mastery score, and immediate priority tasks. 
+- Unique Element: "AI Study Tip" widget that provides contextual advice based on the student's recent performance (e.g., "You lose focus after 45 minutes of Math, try 25-minute sprints").
+
+B. Dynamic Study Planner (The Core Engine)
+- What it does: Generates the daily study schedule.
+- Details: Students input subjects, current mastery levels, and exam dates. Clicking "Generate AI Plan" connects to the backend Python models (`priority_calculator.py`, `scheduler.py`). 
+- Unique Element: It calculates a "Priority Score" for every topic. If an exam is near and mastery is low, priority spikes. It allocates precise minutes based on available time, utilizing a Drag-and-Drop UI for manual tweaks.
+
+C. Quiz Mode & Mistake Analysis
+- What it does: Tests knowledge and finds gaps.
+- Details: After completing a topic, the student takes a short quiz.
+- Unique Element: It doesn't just grade the student; it feeds the mistakes directly back into the recommendation engine. A failed quiz instantly reschedules that topic for a review the very next day.
+
+D. Progress & Analytics
+- What it does: Visualizes the learning journey.
+- Details: Uses charts to show attention span trends, mastery growth over time, and subject-wise comparisons.
+- Unique Element: Generates downloadable PDF reports (`progress_report.pdf`, `analytics_report.pdf`) that students can review.
+
+E. The Pomodoro & Attention Tracker
+- What it does: Manages immediate focus time.
+- Details: Integrated directly into the sidebar with a visual SVG ring timer (Focus, Short Break, Long Break).
+- Unique Element: The tracker records completion rates. If a student frequently pauses during a 50-minute block, the AI learns this and automatically suggests 25-minute Pomodoros for future sessions.
+
+---
+
+4. THE UNIQUE SELLING PROPOSITION (USP)
+=========================================================
+What makes Vortex truly unique?
+Most study planners are "Dumb Calendars." You tell them what to do, and if you miss a day, the whole plan falls apart, causing guilt and stress. 
+
+Vortex is a "Living Schedule."
+If a student is tired and studies for only 20 minutes instead of 60, Vortex doesn't send a guilt-inducing notification. Instead, the backend (`recommendation_engine.py`) recalculates the learning curves, shifts the missed 40 minutes across the upcoming week seamlessly, and prioritizes the most critical topics. 
+
+It is the literal embodiment of "Students solving their own suffering through technology." It removes the guilt of falling behind and replaces it with an ever-adapting path forward.
+
+---
+
+5. HACKATHON VIDEO FLOW RECOMMENDATION
+=========================================================
+0:00 - 0:30: The Hook
+"Students are burning out because we use static timetables for dynamic human brains." Introduce the problem.
+
+0:30 - 1:30: The Solution (Vortex)
+Show the Dashboard and Planner UI. Explain how it tackles the prompt by tracking attention span, mistakes, and revision habits.
+
+1:30 - 2:00: Neuromorphism & AI Under the Hood
+Show a brief glimpse of the backend (`priority_calculator.py`). Explain how the AI mimics human memory decay (Neuromorphism) to calculate priority scores, adjusting recommendations in real-time.
+
+2:00 - 2:30: Feature Demo
+Show adding a subject, generating an AI plan, using the Pomodoro timer, and viewing the analytics. Highlight the beautiful, stress-reducing UI.
+
+2:30 - 3:00: The Impact
+Conclude with the mission: "Students solving their own suffering through technology. Vortex doesn't just manage time; it manages cognitive load." Call to action.

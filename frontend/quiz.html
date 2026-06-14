@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz Mode — Vortex Study Planner</title>
+  <meta name="description" content="Test your knowledge with AI-powered quizzes and get real-time feedback on your understanding." />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* Quiz arena */
+    .quiz-arena {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .quiz-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      gap: 16px;
+    }
+
+    .q-counter {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+    .q-counter strong { color: var(--accent); }
+
+    .xp-bar {
+      flex: 1;
+      height: 8px;
+      background: rgba(255,255,255,0.08);
+      border-radius: var(--radius-pill);
+      overflow: hidden;
+    }
+    .xp-fill {
+      height: 100%;
+      background: var(--grad-purple);
+      border-radius: var(--radius-pill);
+      transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+    }
+    .xp-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .quiz-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 36px;
+      position: relative;
+      overflow: hidden;
+    }
+    .quiz-card::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(108,99,255,0.1), transparent 70%);
+    }
+
+    .question-num {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+    .question-text {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 700;
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+    .options-grid { display: flex; flex-direction: column; gap: 10px; }
+
+    .explanation-box {
+      margin-top: 20px;
+      padding: 16px 20px;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      line-height: 1.7;
+      display: none;
+      animation: slideUp 0.3s ease both;
+    }
+    .explanation-box.correct {
+      background: rgba(67,233,123,0.1);
+      border: 1px solid rgba(67,233,123,0.2);
+      color: #a0ffcc;
+    }
+    .explanation-box.wrong {
+      background: rgba(255,77,109,0.1);
+      border: 1px solid rgba(255,77,109,0.2);
+      color: #ffb3c1;
+    }
+
+    /* Timer bar */
+    .q-timer { margin-bottom: 20px; }
+    .q-timer-bar {
+      height: 4px;
+      background: rgba(255,255,255,0.08);
+      border-radius: var(--radius-pill);
+      overflow: hidden;
+    }
+    .q-timer-fill {
+      height: 100%;
+      border-radius: var(--radius-pill);
+      background: var(--grad-green);
+      transition: width 1s linear, background 0.5s;
+    }
+    .q-timer-fill.warn { background: var(--grad-pink); }
+
+    /* Results */
+    .result-card {
+      text-align: center;
+      padding: 48px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    .result-emoji { font-size: 4rem; margin-bottom: 16px; animation: bounce 0.8s ease both; }
+    @keyframes bounce {
+      0%   { transform: scale(0) rotate(-20deg); }
+      60%  { transform: scale(1.2) rotate(5deg); }
+      100% { transform: scale(1) rotate(0); }
+    }
+    .result-score {
+      font-family: var(--font-display);
+      font-size: 4rem;
+      font-weight: 900;
+      background: var(--grad-purple);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    .result-msg { font-size: 1.125rem; font-weight: 600; margin-bottom: 4px; }
+    .result-sub { color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 32px; }
+
+    .result-stats {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .result-stat {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+    }
+    .result-stat .val { font-family:var(--font-display);font-size:1.5rem;font-weight:800; }
+    .result-stat .lbl { font-size:0.72rem;color:var(--text-muted);margin-top:2px; }
+
+    .confetti-piece {
+      position: fixed;
+      width: 10px; height: 10px;
+      border-radius: 2px;
+      animation: confettiFall linear forwards;
+      pointer-events: none;
+      z-index: 9998;
+    }
+    @keyframes confettiFall {
+      0%   { transform: translateY(-20px) rotate(0deg); opacity:1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity:0; }
+    }
+
+    /* Subject selector */
+    .quiz-subject-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 24px 16px;
+      background: rgba(255,255,255,0.04);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 0.875rem;
+      font-weight: 600;
+      font-family: var(--font-main);
+      color: var(--text-secondary);
+    }
+    .quiz-subject-btn:hover { border-color: var(--accent); background: rgba(108,99,255,0.1); color: #fff; }
+    .quiz-subject-btn.selected { border-color: var(--accent); background: rgba(108,99,255,0.15); color: var(--accent); }
+    .quiz-subject-btn .emoji { font-size: 2rem; }
+
+    .difficulty-btn {
+      padding: 10px 22px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      color: var(--text-secondary);
+      background: transparent;
+      font-family: var(--font-main);
+    }
+    .difficulty-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(108,99,255,0.4); }
+
+    /* Streak badges during quiz */
+    .streak-badge {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      z-index: 9999;
+      font-size: 2rem;
+      font-weight: 900;
+      font-family: var(--font-display);
+      background: var(--grad-purple);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: streakPop 1.2s ease both;
+      pointer-events: none;
+      text-shadow: none;
+      filter: drop-shadow(0 0 20px rgba(108,99,255,0.8));
+    }
+    @keyframes streakPop {
+      0%   { transform: translate(-50%,-50%) scale(0); opacity:0; }
+      30%  { transform: translate(-50%,-60%) scale(1.4); opacity:1; }
+      70%  { transform: translate(-50%,-65%) scale(1.1); opacity:1; }
+      100% { transform: translate(-50%,-80%) scale(0.8); opacity:0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient ambient-1"></div>
+  <div class="ambient ambient-2"></div>
+  <div class="ambient ambient-3"></div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Nav -->
+  <nav class="nav" id="mainNav">
+    <a href="index.html" class="nav-logo">
+      <div class="logo-icon">⚡</div>
+      Vortex
+    </a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="planner.html">Planner</a></li>
+      <li><a href="quiz.html" class="active">Quiz</a></li>
+      <li><a href="progress.html">Progress</a></li>
+      <li><a href="subjects.html">Subjects</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div class="flex items-center gap-8" style="background:rgba(255,209,102,0.1);border:1px solid rgba(255,209,102,0.2);padding:6px 14px;border-radius:var(--radius-pill);">
+        <span>⚡</span>
+        <span style="font-weight:700;color:var(--medium);" id="xpCount">1,240 XP</span>
+      </div>
+      <div class="nav-user">
+        <div class="nav-avatar" id="navAvatar">S</div>
+        <span id="navName">Sanju</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <span class="sidebar-section-title">Main</span>
+      <a href="dashboard.html" class="sidebar-link"><span class="icon">🏠</span> Dashboard</a>
+      <a href="planner.html"   class="sidebar-link"><span class="icon">📅</span> Study Planner</a>
+      <a href="quiz.html"      class="sidebar-link active"><span class="icon">🧠</span> Quiz Mode</a>
+      <a href="progress.html"  class="sidebar-link"><span class="icon">📈</span> Progress</a>
+
+      <span class="sidebar-section-title">Quiz Stats</span>
+      <div class="card" style="margin:8px 0;padding:16px;">
+        <div class="flex items-center justify-between mb-12">
+          <span style="font-size:0.75rem;color:var(--text-muted);">Today's Accuracy</span>
+          <span style="font-weight:700;color:var(--accent-3);" id="todayAccuracy">78%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="accuracyBar" style="width:78%;background:var(--grad-green);"></div>
+        </div>
+        <div class="flex items-center justify-between mt-12">
+          <span style="font-size:0.75rem;color:var(--text-muted);">Questions</span>
+          <span style="font-weight:700;" id="totalQuestions">0</span>
+        </div>
+        <div class="flex items-center justify-between mt-8">
+          <span style="font-size:0.75rem;color:var(--text-muted);">Best Streak 🔥</span>
+          <span style="font-weight:700;color:var(--medium);" id="bestStreak">0</span>
+        </div>
+      </div>
+
+      <span class="sidebar-section-title">Leaderboard</span>
+      <div id="leaderboard" style="display:flex;flex-direction:column;gap:6px;margin:4px 0;"></div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content page-enter">
+
+      <!-- Setup Screen -->
+      <div id="setupScreen">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Quiz Mode 🧠</h1>
+            <p class="page-subtitle">Test your knowledge, track your progress</p>
+          </div>
+        </div>
+
+        <div class="quiz-arena">
+          <!-- Subject Selection -->
+          <div class="card mb-20">
+            <div class="flex items-center justify-between mb-16">
+              <h2 class="text-lg font-bold">Choose a Subject</h2>
+              <span class="badge badge-purple">Class 12 CBSE</span>
+            </div>
+            <div id="quizSubjectGrid" class="grid-4" style="gap:10px;"></div>
+          </div>
+
+          <!-- Topic Filter -->
+          <div class="card mb-20" id="topicFilterWrap" style="display:none;">
+            <h2 class="text-base font-bold mb-12">📌 Filter by Topic</h2>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;" id="topicFilterGrid"></div>
+          </div>
+
+          <!-- Difficulty -->
+          <div class="card mb-20">
+            <h2 class="text-base font-bold mb-16">Difficulty Level</h2>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button class="difficulty-btn active" id="diff-easy"   onclick="setDifficulty('easy')">🟢 Easy</button>
+              <button class="difficulty-btn"        id="diff-medium" onclick="setDifficulty('medium')">🟡 Medium</button>
+              <button class="difficulty-btn"        id="diff-hard"   onclick="setDifficulty('hard')">🔴 Hard</button>
+              <button class="difficulty-btn"        id="diff-mixed"  onclick="setDifficulty('mixed')">🎲 Mixed</button>
+            </div>
+          </div>
+
+          <!-- Quiz Options -->
+          <div class="card mb-24">
+            <h2 class="text-base font-bold mb-16">Quiz Options</h2>
+            <div class="grid-2" style="gap:16px;">
+              <div class="form-group">
+                <label class="form-label">Number of Questions</label>
+                <select class="form-select" id="questionCount">
+                  <option value="5">5 Questions</option>
+                  <option value="10" selected>10 Questions</option>
+                  <option value="15">15 Questions</option>
+                  <option value="20">20 Questions</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Time per Question</label>
+                <select class="form-select" id="timePerQ">
+                  <option value="0">No Limit</option>
+                  <option value="15">15 seconds</option>
+                  <option value="30" selected>30 seconds</option>
+                  <option value="60">60 seconds</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-lg w-full" id="startQuizBtn" onclick="startQuiz()">
+            🚀 Start Quiz
+          </button>
+        </div>
+      </div>
+
+      <!-- Quiz Screen -->
+      <div id="quizScreen" class="hidden">
+        <div class="quiz-arena">
+          <!-- Header -->
+          <div class="quiz-header-bar">
+            <div class="q-counter">Question <strong id="currentQNum">1</strong> of <strong id="totalQNum">10</strong></div>
+            <div class="xp-bar">
+              <div class="xp-fill" id="quizXpBar" style="width:0%"></div>
+            </div>
+            <div class="xp-label">+<span id="earnedXp">0</span> XP</div>
+            <div style="display:flex;align-items:center;gap-8px;">
+              <span style="font-size:1.2rem;" id="streakEmoji">🔥</span>
+              <span style="font-weight:700;color:var(--medium);" id="currentStreakVal">0</span>
+            </div>
+          </div>
+
+          <!-- Timer -->
+          <div class="q-timer" id="timerWrap">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-size:0.75rem;color:var(--text-muted);">Time remaining</span>
+              <span style="font-weight:700;font-size:0.875rem;" id="timerDisplay">30s</span>
+            </div>
+            <div class="q-timer-bar">
+              <div class="q-timer-fill" id="timerFill" style="width:100%;"></div>
+            </div>
+          </div>
+
+          <!-- Question Card -->
+          <div class="quiz-card">
+            <div class="question-num">
+              <span id="qSubjectTag">📐 Mathematics</span>
+              <span class="badge badge-purple" id="qDiffTag">Medium</span>
+            </div>
+            <div class="question-text" id="questionText">Loading question...</div>
+            <div class="options-grid" id="optionsGrid"></div>
+            <div class="explanation-box" id="explanationBox"></div>
+          </div>
+
+          <!-- Next Button -->
+          <div style="display:flex;justify-content:flex-end;margin-top:20px;gap:10px;">
+            <button class="btn btn-ghost" onclick="skipQuestion()">Skip →</button>
+            <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" disabled style="opacity:0.5;">
+              Next Question →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Screen -->
+      <div id="resultsScreen" class="hidden">
+        <div class="quiz-arena">
+          <div class="card result-card">
+            <div class="result-emoji" id="resultEmoji">🏆</div>
+            <div class="result-score" id="resultScore">85%</div>
+            <div class="result-msg" id="resultMsg">Excellent Work!</div>
+            <div class="result-sub" id="resultSub">You've mastered 8 out of 10 questions</div>
+
+            <div class="result-stats" id="resultStats">
+              <div class="result-stat">
+                <div class="val text-success" id="res-correct">8</div>
+                <div class="lbl">Correct</div>
+              </div>
+              <div class="result-stat">
+                <div class="val text-danger" id="res-wrong">2</div>
+                <div class="lbl">Wrong</div>
+              </div>
+              <div class="result-stat">
+                <div class="val text-accent" id="res-xp">+400 XP</div>
+                <div class="lbl">Earned</div>
+              </div>
+            </div>
+
+            <!-- Mistake Analysis -->
+            <div id="mistakeAnalysis" style="text-align:left;margin-bottom:24px;"></div>
+
+            <!-- AI Feedback Panel (populated by api.js after quiz submit) -->
+            <div id="aiFeedbackPanel" style="display:none;text-align:left;margin-bottom:24px;padding:20px;background:rgba(108,99,255,0.06);border:1px solid rgba(108,99,255,0.2);border-radius:var(--radius-lg);"></div>
+
+            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="retakeQuiz()">🔄 Retake Quiz</button>
+              <button class="btn btn-secondary" onclick="reviewAnswers()">📖 Review Answers</button>
+              <a href="progress.html" class="btn btn-ghost">📈 View Progress</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Review Screen -->
+      <div id="reviewScreen" class="hidden">
+        <div class="quiz-arena">
+          <div class="page-header" style="margin-bottom:20px;">
+            <h2 class="text-xl font-bold">Answer Review</h2>
+            <button class="btn btn-secondary btn-sm" onclick="backToResults()">← Back to Results</button>
+          </div>
+          <div id="reviewList" style="display:flex;flex-direction:column;gap:16px;"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/quiz.js"></script>
+  <script>
+    // ── API Integration: submit quiz result after showResults() runs ──────
+    const _origShowResults = showResults;
+    showResults = async function() {
+      _origShowResults();   // run original (renders UI, confetti, etc.)
+
+      // Post to backend for AI analysis
+      const apiRes = await apiSubmitQuiz(quizState);
+
+      const aiFeedback = document.getElementById('aiFeedbackPanel');
+      if (!aiFeedback) return;
+
+      if (apiRes && apiRes.success) {
+        const statusMap = {
+          'Exam Ready':         { cls:'badge-low',    icon:'🏆' },
+          'Almost Ready':       { cls:'badge-purple', icon:'⚡' },
+          'Needs Improvement':  { cls:'badge-medium', icon:'📚' },
+          'High Risk':          { cls:'badge-high',   icon:'⚠️' },
+        };
+        const s = statusMap[apiRes.exam_readiness] || { cls:'badge-purple', icon:'🎯' };
+
+        aiFeedback.innerHTML = `
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+            <span style="font-size:1.2rem;">🤖</span>
+            <span style="font-weight:700;font-size:0.95rem;">AI Analysis</span>
+            <span class="badge ${s.cls}">${s.icon} ${apiRes.exam_readiness}</span>
+          </div>
+          <div style="display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap;">
+            <div style="text-align:center;">
+              <div style="font-family:var(--font-display);font-size:1.6rem;font-weight:800;color:var(--accent);">${apiRes.learning_score}</div>
+              <div style="font-size:0.7rem;color:var(--text-muted);">Learning Score</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-family:var(--font-display);font-size:1.6rem;font-weight:800;color:var(--accent-2);">${apiRes.attention_score}</div>
+              <div style="font-size:0.7rem;color:var(--text-muted);">Attention Score</div>
+            </div>
+          </div>
+          ${apiRes.recommendations?.map(r => `
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:6px;font-size:0.8rem;color:var(--text-secondary);">
+              💡 ${r}
+            </div>`).join('')}
+        `;
+        aiFeedback.style.display = 'block';
+      } else {
+        aiFeedback.innerHTML = `<div style="font-size:0.8rem;color:var(--text-muted);text-align:center;padding:10px;">⚡ Start the backend server to get AI analysis!</div>`;
+        aiFeedback.style.display = 'block';
+      }
+    };
+  </script>
+</body>
+</html>

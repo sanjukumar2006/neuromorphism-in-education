@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Vortex Study Planner</title>
+  <meta name="description" content="Your personalized study dashboard with AI recommendations, progress analytics, and attention tracking." />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .today-session {
+      background: linear-gradient(135deg, rgba(108,99,255,0.15), rgba(168,85,247,0.08));
+      border: 1px solid rgba(108,99,255,0.25);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .today-session::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 150px; height: 150px;
+      background: radial-gradient(circle, rgba(108,99,255,0.2), transparent 70%);
+      pointer-events: none;
+    }
+    .streak-fire {
+      font-size: 2rem;
+      animation: fire 0.8s ease-in-out infinite alternate;
+    }
+    @keyframes fire {
+      from { transform: scale(1) rotate(-5deg); }
+      to   { transform: scale(1.15) rotate(5deg); }
+    }
+    .session-timer {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    /* Subject row in plan */
+    .plan-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      transition: var(--transition);
+      cursor: pointer;
+    }
+    .plan-row:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.1);
+      transform: translateX(4px);
+    }
+    .plan-row .order {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .plan-row .info { flex: 1; }
+    .plan-row .name { font-weight: 600; font-size: 0.9rem; }
+    .plan-row .meta { color: var(--text-muted); font-size: 0.75rem; }
+
+    /* Score ring animation */
+    .score-ring { transition: stroke-dashoffset 2s cubic-bezier(0.4,0,0.2,1); }
+
+    /* Notification dot */
+    .notif-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--high);
+      position: absolute;
+      top: 6px; right: 6px;
+      box-shadow: 0 0 6px var(--high);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    /* Activity chart bars */
+    .chart-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 80px;
+      padding: 0 4px;
+    }
+    .chart-bar {
+      flex: 1;
+      border-radius: 4px 4px 0 0;
+      background: rgba(108,99,255,0.3);
+      transition: height 1s cubic-bezier(0.4,0,0.2,1), background var(--transition);
+      cursor: pointer;
+      position: relative;
+    }
+    .chart-bar:hover { background: var(--accent); }
+    .chart-bar.today { background: var(--accent); box-shadow: 0 0 12px rgba(108,99,255,0.5); }
+    .chart-bar::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e1e30;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 3px 7px;
+      font-size: 0.7rem;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: var(--transition);
+    }
+    .chart-bar:hover::after { opacity: 1; }
+
+    .chart-labels {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .chart-labels span {
+      flex: 1;
+      text-align: center;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+    .chart-labels span.today { color: var(--accent); font-weight: 700; }
+
+    /* Reco tag colors */
+    .reco-high   { background:rgba(255,77,109,0.08); }
+    .reco-medium { background:rgba(255,209,102,0.08); }
+    .reco-low    { background:rgba(6,214,160,0.08); }
+
+    .quick-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: center;
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .quick-btn:hover { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
+    .quick-btn .q-icon { font-size: 1.5rem; }
+  </style>
+</head>
+<body>
+  <div class="ambient ambient-1"></div>
+  <div class="ambient ambient-2"></div>
+  <div class="ambient ambient-3"></div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Nav -->
+  <nav class="nav" id="mainNav">
+    <a href="index.html" class="nav-logo">
+      <div class="logo-icon">⚡</div>
+      Vortex
+    </a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html" class="active">Dashboard</a></li>
+      <li><a href="planner.html">Planner</a></li>
+      <li><a href="quiz.html">Quiz</a></li>
+      <li><a href="progress.html">Progress</a></li>
+      <li><a href="subjects.html">Subjects</a></li>
+    </ul>
+    <div class="nav-actions">
+      <!-- API Status Indicator -->
+      <div style="display:flex;align-items:center;gap:6px;font-size:0.72rem;color:var(--text-muted);" title="Backend connection status">
+        <span id="apiStatusDot" style="width:8px;height:8px;border-radius:50%;background:#555;display:inline-block;transition:background 0.4s;"></span>
+        <span id="apiStatusLabel">Connecting...</span>
+      </div>
+      <button class="btn btn-icon btn-ghost" id="notifBtn" style="position:relative" data-tip="Notifications" onclick="toggleNotifPanel()">
+        🔔
+        <span class="notif-dot"></span>
+      </button>
+      <div class="nav-user" onclick="toggleUserMenu()">
+        <div class="nav-avatar" id="navAvatar">S</div>
+        <span id="navName">Sanju</span>
+        <span>▾</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- User Menu Dropdown -->
+  <div id="userMenu" style="position:fixed;top:68px;right:24px;z-index:150;background:#13131f;border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;min-width:200px;box-shadow:var(--shadow-lift);display:none;">
+    <div style="padding:8px 12px 12px;border-bottom:1px solid var(--border);margin-bottom:8px;">
+      <div style="font-weight:700;font-size:0.9rem;" id="menuName">Sanju</div>
+      <div style="color:var(--text-muted);font-size:0.75rem;" id="menuEmail">sanju@example.com</div>
+    </div>
+    <a href="#" class="sidebar-link" onclick="closeUserMenu()">⚙️ <span>Settings</span></a>
+    <a href="#" class="sidebar-link" onclick="closeUserMenu()">📊 <span>My Reports</span></a>
+    <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+      <a href="index.html" class="sidebar-link" style="color:var(--high)">🚪 <span>Sign Out</span></a>
+    </div>
+  </div>
+
+  <!-- Layout -->
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <span class="sidebar-section-title">Main</span>
+      <a href="dashboard.html" class="sidebar-link active">
+        <span class="icon">🏠</span> Dashboard
+      </a>
+      <a href="planner.html" class="sidebar-link">
+        <span class="icon">📅</span> Study Planner
+        <span class="badge-count">3</span>
+      </a>
+      <a href="quiz.html" class="sidebar-link">
+        <span class="icon">🧠</span> Quiz Mode
+      </a>
+      <a href="progress.html" class="sidebar-link">
+        <span class="icon">📈</span> Progress
+      </a>
+      <a href="subjects.html" class="sidebar-link">
+        <span class="icon">📚</span> Subjects
+      </a>
+
+      <span class="sidebar-section-title">Tools</span>
+      <a href="#" class="sidebar-link" onclick="openRevisionModal()">
+        <span class="icon">🔄</span> Revision Engine
+      </a>
+      <a href="#" class="sidebar-link" onclick="openAttentionPanel()">
+        <span class="icon">🎯</span> Attention Tracker
+      </a>
+      <a href="#" class="sidebar-link">
+        <span class="icon">⏱️</span> Study Timer
+      </a>
+
+      <span class="sidebar-section-title">Insights</span>
+      <a href="#" class="sidebar-link">
+        <span class="icon">🤖</span> AI Coach
+        <span class="badge-count">New</span>
+      </a>
+      <a href="#" class="sidebar-link">
+        <span class="icon">🏆</span> Achievements
+      </a>
+
+      <!-- Sidebar bottom: today's goal -->
+      <div style="margin-top:auto;padding-top:24px;">
+        <div style="padding:14px;background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.15);border-radius:var(--radius-md);">
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;">Today's Goal</div>
+          <div class="progress-bar mb-8" style="height:6px;">
+            <div class="progress-fill" id="sidebarGoalFill" style="width:0%;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.75rem;">
+            <span id="sidebarGoalDone" style="font-weight:700;color:var(--accent);">0m</span>
+            <span style="color:var(--text-muted);" id="sidebarGoalTotal">120m</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content page-enter">
+      <!-- Header -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title" id="greetingTitle">Good evening, Sanju! 👋</h1>
+          <p class="page-subtitle" id="greetingSubtitle">You have 3 subjects to study today. Let's crush it!</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div class="flex items-center gap-8" style="background:rgba(255,209,102,0.1);border:1px solid rgba(255,209,102,0.2);padding:8px 14px;border-radius:var(--radius-pill);">
+            <span class="streak-fire">🔥</span>
+            <span style="font-weight:700;color:var(--medium);" id="streakCount">7</span>
+            <span style="color:var(--text-muted);font-size:0.8rem;">day streak</span>
+          </div>
+          <button class="btn btn-primary" onclick="startStudySession()" id="startSessionBtn">
+            ▶ Start Session
+          </button>
+        </div>
+      </div>
+
+      <!-- Today's Session Banner -->
+      <div class="today-session mb-24" id="sessionBanner" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+          <div>
+            <div style="font-size:0.75rem;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">⚡ Active Session</div>
+            <div class="session-timer" id="sessionTimerDisplay">00:00:00</div>
+            <div style="color:var(--text-secondary);font-size:0.875rem;margin-top:4px;">
+              Studying: <strong id="currentSubjectDisplay">Mathematics</strong>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-secondary btn-sm" onclick="pauseSession()" id="pauseBtn">⏸ Pause</button>
+            <button class="btn btn-danger btn-sm" onclick="endSession()">⏹ End</button>
+          </div>
+        </div>
+        <!-- Attention Meter -->
+        <div style="margin-top:20px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:0.8rem;">
+            <span style="color:var(--text-secondary);">Attention Score</span>
+            <span style="color:var(--accent);font-weight:700;" id="attentionPct">—</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="attentionFill" style="width:0%;background:var(--grad-green);"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="grid-4 stagger mb-24" id="statsGrid">
+        <div class="card stat-card">
+          <div class="stat-icon" style="background:rgba(108,99,255,0.15);">🕐</div>
+          <div class="stat-value grad-text-purple" id="stat-hours">4h 20m</div>
+          <div class="stat-label">Total Studied Today</div>
+          <span class="stat-change up">↑ 23% vs yesterday</span>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon" style="background:rgba(67,233,123,0.1);">🎯</div>
+          <div class="stat-value grad-text-green" id="stat-accuracy">78%</div>
+          <div class="stat-label">Quiz Accuracy</div>
+          <span class="stat-change up">↑ 5% this week</span>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon" style="background:rgba(255,101,132,0.1);">🧠</div>
+          <div class="stat-value grad-text-pink" id="stat-attention">82</div>
+          <div class="stat-label">Attention Score</div>
+          <span class="stat-change down">↓ 3pts today</span>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon" style="background:rgba(0,201,255,0.1);">📚</div>
+          <div class="stat-value grad-text-blue" id="stat-topics">12</div>
+          <div class="stat-label">Topics Completed</div>
+          <span class="stat-change up">↑ 2 new today</span>
+        </div>
+      </div>
+
+      <!-- Main Grid -->
+      <div class="grid-2 mb-24" style="grid-template-columns: 1fr 1.2fr;">
+
+        <!-- Today's Study Plan -->
+        <div class="card">
+          <div class="flex items-center justify-between mb-24">
+            <div>
+              <h2 class="text-lg font-bold">Today's Plan</h2>
+              <p class="text-sm text-secondary">Sorted by priority</p>
+            </div>
+            <a href="planner.html" class="btn btn-sm btn-ghost">Edit →</a>
+          </div>
+          <div id="todayPlanList" style="display:flex;flex-direction:column;gap:10px;">
+            <!-- dynamically filled -->
+          </div>
+        </div>
+
+        <!-- Weekly Activity Chart -->
+        <div class="card">
+          <div class="flex items-center justify-between mb-20">
+            <div>
+              <h2 class="text-lg font-bold">Weekly Activity</h2>
+              <p class="text-sm text-secondary">Study hours per day</p>
+            </div>
+            <span class="badge badge-purple">This Week</span>
+          </div>
+          <div class="chart-bars" id="activityBars"></div>
+          <div class="chart-labels" id="activityLabels"></div>
+          <div class="divider"></div>
+          <div class="grid-2" style="gap:8px;">
+            <div style="text-align:center;">
+              <div style="font-size:1.5rem;font-weight:700;color:var(--accent);" id="weekTotal">24h</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);">This week</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:1.5rem;font-weight:700;color:var(--accent-3);" id="weekAvg">3.4h</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);">Daily avg</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="grid-2 mb-24" style="grid-template-columns: 1.2fr 1fr;">
+
+        <!-- AI Recommendations -->
+        <div class="card">
+          <div class="flex items-center justify-between mb-20">
+            <div>
+              <h2 class="text-lg font-bold">🤖 AI Recommendations</h2>
+              <p class="text-sm text-secondary">Based on your learning patterns</p>
+            </div>
+            <button class="btn btn-sm btn-secondary" onclick="refreshRecommendations()">Refresh</button>
+          </div>
+          <div id="recoList" style="display:flex;flex-direction:column;gap:10px;">
+            <!-- dynamically filled -->
+          </div>
+        </div>
+
+        <!-- Streak Calendar + Quick Actions -->
+        <div style="display:flex;flex-direction:column;gap:20px;">
+          <!-- Streak -->
+          <div class="card">
+            <div class="flex items-center justify-between mb-16">
+              <h2 class="text-base font-bold">Study Streak 🔥</h2>
+              <span style="font-weight:700;color:var(--medium);" id="streakDays">7 days</span>
+            </div>
+            <div class="streak-grid" id="streakGrid"></div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="card">
+            <h2 class="text-base font-bold mb-16">Quick Actions</h2>
+            <div class="grid-2" style="gap:8px;">
+              <a href="quiz.html" class="quick-btn">
+                <span class="q-icon">🧠</span>
+                Start Quiz
+              </a>
+              <a href="planner.html" class="quick-btn">
+                <span class="q-icon">📅</span>
+                Planner
+              </a>
+              <a href="#" class="quick-btn" onclick="openRevisionModal()">
+                <span class="q-icon">🔄</span>
+                Revision
+              </a>
+              <a href="progress.html" class="quick-btn">
+                <span class="q-icon">📈</span>
+                Progress
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subject Overview -->
+      <div class="card mb-24">
+        <div class="flex items-center justify-between mb-24">
+          <div>
+            <h2 class="text-lg font-bold">Subject Overview</h2>
+            <p class="text-sm text-secondary">Your performance across all subjects</p>
+          </div>
+          <a href="progress.html" class="btn btn-sm btn-ghost">View All →</a>
+        </div>
+        <div id="subjectOverview" class="grid-3" style="gap:14px;"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Revision Modal -->
+  <div class="modal-overlay" id="revisionModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">🔄 Revision Schedule</h2>
+        <button class="modal-close" onclick="closeModal('revisionModal')">✕</button>
+      </div>
+      <div id="revisionContent">
+        <div class="timeline" id="revisionTimeline"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attention Panel Modal -->
+  <div class="modal-overlay" id="attentionModal">
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header">
+        <h2 class="modal-title">🎯 Attention Tracker</h2>
+        <button class="modal-close" onclick="closeModal('attentionModal')">✕</button>
+      </div>
+      <div class="text-center mb-24">
+        <div style="margin:20px auto;position:relative;width:140px;height:140px;">
+          <svg width="140" height="140" style="transform:rotate(-90deg);">
+            <defs>
+              <linearGradient id="attGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#6c63ff"/>
+                <stop offset="100%" style="stop-color:#a855f7"/>
+              </linearGradient>
+            </defs>
+            <circle cx="70" cy="70" r="60" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="12"/>
+            <circle cx="70" cy="70" r="60" fill="none" stroke="url(#attGrad)" stroke-width="12"
+              stroke-linecap="round"
+              stroke-dasharray="377"
+              stroke-dashoffset="83"
+              id="attCircle" class="score-ring"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div style="font-size:2rem;font-weight:800;font-family:var(--font-display);" id="attScore">78</div>
+            <div style="font-size:0.72rem;color:var(--text-muted);">/ 100</div>
+          </div>
+        </div>
+        <div style="font-size:1.1rem;font-weight:700;margin-bottom:4px;">Good Focus 🎯</div>
+        <div style="font-size:0.875rem;color:var(--text-secondary);">Your attention is above average today</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;" id="attTopics"></div>
+    </div>
+  </div>
+
+  <!-- FAB -->
+  <button class="fab" onclick="startStudySession()" id="fab" data-tip="Start Session">⚡</button>
+
+  <script src="js/main.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script>
+    // ── API Integration for Dashboard ────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Load live stats from API
+      const stats = await apiGetStats();
+      if (stats && stats.success) {
+        const el = id => document.getElementById(id);
+        if (el('sidebarGoalDone')) el('sidebarGoalDone').textContent = stats.today_studied || '0m';
+        if (el('streakValue'))     el('streakValue').textContent     = stats.streak_days + ' days';
+        if (el('xpCount'))         el('xpCount').textContent         = stats.total_xp.toLocaleString() + ' XP';
+      }
+
+      // Load AI recommendations
+      const recs = await apiGetRecommendations();
+      if (recs && recs.success && recs.recommendations?.length > 0) {
+        renderAPIRecommendations(recs);
+      }
+
+      // Load subjects from API
+      const subjRes = await apiGetSubjects();
+      if (subjRes && subjRes.success) {
+        renderSubjectCards(); // re-render with fresh data
+      }
+    });
+
+    function renderAPIRecommendations(recs) {
+      const panel = document.getElementById('insightPanel') ||
+                    document.getElementById('aiInsightsPanel');
+      if (!panel) return;
+
+      const badges = {
+        'Exam Ready':       { cls: 'badge-low',    icon: '🏆' },
+        'Almost Ready':     { cls: 'badge-purple', icon: '⚡' },
+        'Needs Improvement':{ cls: 'badge-medium', icon: '📚' },
+        'High Risk':        { cls: 'badge-high',   icon: '⚠️' },
+      };
+      const badge = badges[recs.exam_readiness] || { cls: 'badge-purple', icon: '🎯' };
+
+      panel.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <span class="badge ${badge.cls}">${badge.icon} ${recs.exam_readiness}</span>
+          <span style="font-size:0.8rem;color:var(--text-muted);">
+            Learning Score: <strong style="color:var(--accent);">${recs.learning_score}</strong>/100
+          </span>
+        </div>
+        ${recs.recommendations.slice(0,4).map(r => `
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:6px;">
+            <span style="font-size:0.9rem;">💡</span>
+            <span style="font-size:0.8rem;color:var(--text-secondary);">${r}</span>
+          </div>`).join('')}
+      `;
+    }
+  </script>
+</body>
+</html>

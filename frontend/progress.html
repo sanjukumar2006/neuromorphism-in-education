@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Progress — Vortex</title>
+  <meta name="description" content="Track your academic progress with detailed analytics, attention scores, and AI-powered insights." />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* Radar chart canvas */
+    #radarCanvas { display:block;margin:0 auto; }
+
+    .subject-progress-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      transition: var(--transition);
+      cursor: pointer;
+    }
+    .subject-progress-row:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
+    .spr-emoji { font-size: 1.5rem; width: 40px; text-align: center; }
+    .spr-info { flex: 1; }
+    .spr-name  { font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; }
+    .spr-bar   { }
+    .spr-right { text-align: right; flex-shrink: 0; }
+    .spr-score { font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; }
+    .spr-change { font-size: 0.72rem; }
+
+    .heatmap-cell {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: transform var(--transition);
+      position: relative;
+    }
+    .heatmap-cell:hover { transform: scale(1.3); z-index: 2; }
+
+    .achievement-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      transition: var(--transition);
+    }
+    .achievement-item.unlocked {
+      background: rgba(108,99,255,0.08);
+      border-color: rgba(108,99,255,0.2);
+    }
+    .achievement-item.locked { opacity: 0.4; }
+    .ach-icon {
+      font-size: 2rem;
+      width: 48px;
+      text-align: center;
+    }
+    .ach-info { flex: 1; }
+    .ach-name { font-weight: 700; font-size: 0.875rem; }
+    .ach-desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+    .ach-xp   { font-size: 0.75rem; font-weight: 700; color: var(--accent); }
+
+    /* Sparkline SVG */
+    .sparkline { width: 80px; height: 30px; }
+
+    /* Line chart */
+    .line-chart-wrap {
+      position: relative;
+      width: 100%;
+      height: 200px;
+    }
+    #lineChartSvg { width: 100%; height: 100%; }
+
+    .chart-point {
+      cursor: pointer;
+      transition: r 0.2s;
+    }
+    .chart-point:hover { r: 6; }
+
+    /* Insight cards */
+    .insight-card {
+      padding: 18px 20px;
+      border-radius: var(--radius-lg);
+      border: 1px solid;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .insight-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .insight-title { font-weight: 700; font-size: 0.875rem; margin-bottom: 4px; }
+    .insight-desc  { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.6; }
+
+    /* Month labels for heatmap */
+    .heatmap-months {
+      display: flex;
+      gap: 0;
+      margin-bottom: 4px;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: fadeIn 0.3s ease both; }
+
+    /* Animated counter */
+    .count-up { transition: all 0.5s; }
+  </style>
+</head>
+<body>
+  <div class="ambient ambient-1"></div>
+  <div class="ambient ambient-2"></div>
+  <div class="ambient ambient-3"></div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Nav -->
+  <nav class="nav" id="mainNav">
+    <a href="index.html" class="nav-logo">
+      <div class="logo-icon">⚡</div>
+      Vortex
+    </a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="planner.html">Planner</a></li>
+      <li><a href="quiz.html">Quiz</a></li>
+      <li><a href="progress.html" class="active">Progress</a></li>
+      <li><a href="subjects.html">Subjects</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="btn btn-secondary btn-sm" onclick="exportReport()">⬇ Export Report</button>
+      <div class="nav-user">
+        <div class="nav-avatar" id="navAvatar">S</div>
+        <span id="navName">Sanju</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <span class="sidebar-section-title">Main</span>
+      <a href="dashboard.html" class="sidebar-link"><span class="icon">🏠</span> Dashboard</a>
+      <a href="planner.html"   class="sidebar-link"><span class="icon">📅</span> Study Planner</a>
+      <a href="quiz.html"      class="sidebar-link"><span class="icon">🧠</span> Quiz Mode</a>
+      <a href="progress.html"  class="sidebar-link active"><span class="icon">📈</span> Progress</a>
+      <a href="subjects.html"  class="sidebar-link"><span class="icon">📚</span> Subjects</a>
+
+      <span class="sidebar-section-title">Quick Stats</span>
+      <div style="padding:4px 8px;display:flex;flex-direction:column;gap:10px;">
+        <div class="flex items-center justify-between">
+          <span style="font-size:0.8rem;color:var(--text-muted);">Overall GPA</span>
+          <span style="font-weight:700;color:var(--accent);" id="overallGpa">3.8</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span style="font-size:0.8rem;color:var(--text-muted);">Study Hours</span>
+          <span style="font-weight:700;" id="totalHoursLabel">42h</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span style="font-size:0.8rem;color:var(--text-muted);">Topics Covered</span>
+          <span style="font-weight:700;" id="topicsCoveredLabel">47</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span style="font-size:0.8rem;color:var(--text-muted);">Streak</span>
+          <span style="font-weight:700;color:var(--medium);">🔥 7 days</span>
+        </div>
+      </div>
+
+      <span class="sidebar-section-title">Filter</span>
+      <div style="padding:4px 8px;display:flex;flex-direction:column;gap:6px;">
+        <button class="tab-btn active" id="filter-week"  onclick="setTimeFilter('week')" style="border-radius:var(--radius-md);text-align:left;padding:8px 12px;">Last 7 days</button>
+        <button class="tab-btn" id="filter-month" onclick="setTimeFilter('month')" style="border-radius:var(--radius-md);text-align:left;padding:8px 12px;">Last 30 days</button>
+        <button class="tab-btn" id="filter-all"   onclick="setTimeFilter('all')"   style="border-radius:var(--radius-md);text-align:left;padding:8px 12px;">All time</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content page-enter">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Progress Analytics 📈</h1>
+          <p class="page-subtitle">Deep insights into your learning journey</p>
+        </div>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchProgressTab('overview')">Overview</button>
+          <button class="tab-btn" onclick="switchProgressTab('subjects')">Subjects</button>
+          <button class="tab-btn" onclick="switchProgressTab('achievements')">Achievements</button>
+        </div>
+      </div>
+
+      <!-- ═══ OVERVIEW TAB ═══ -->
+      <div id="progress-overview" class="tab-panel active">
+
+        <!-- Top Stats -->
+        <div class="grid-4 stagger mb-24">
+          <div class="card stat-card">
+            <div class="stat-icon" style="background:rgba(108,99,255,0.15);">📚</div>
+            <div class="stat-value grad-text-purple count-up" id="stat-totalHours">0</div>
+            <div class="stat-label">Total Study Hours</div>
+            <span class="stat-change up">↑ 12% this month</span>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-icon" style="background:rgba(67,233,123,0.1);">✅</div>
+            <div class="stat-value grad-text-green count-up" id="stat-quizzes">0</div>
+            <div class="stat-label">Quizzes Completed</div>
+            <span class="stat-change up">↑ 8 this week</span>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-icon" style="background:rgba(255,101,132,0.1);">🎯</div>
+            <div class="stat-value grad-text-pink count-up" id="stat-avgScore">0%</div>
+            <div class="stat-label">Average Score</div>
+            <span class="stat-change up">↑ 5% improvement</span>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-icon" style="background:rgba(0,201,255,0.1);">🧠</div>
+            <div class="stat-value grad-text-blue count-up" id="stat-attScore">0</div>
+            <div class="stat-label">Avg. Attention</div>
+            <span class="stat-change up">↑ Great focus!</span>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid-2 mb-24" style="grid-template-columns:1.5fr 1fr;">
+
+          <!-- Line Chart: Score over time -->
+          <div class="card">
+            <div class="flex items-center justify-between mb-20">
+              <div>
+                <h2 class="text-lg font-bold">Score Trend</h2>
+                <p class="text-sm text-secondary">Your performance over time</p>
+              </div>
+              <div style="display:flex;gap:12px;">
+                <div style="display:flex;align-items:center;gap:6px;font-size:0.75rem;">
+                  <div style="width:12px;height:3px;border-radius:2px;background:var(--accent);"></div>
+                  <span style="color:var(--text-muted);">Quiz Score</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;font-size:0.75rem;">
+                  <div style="width:12px;height:3px;border-radius:2px;background:var(--accent-3);"></div>
+                  <span style="color:var(--text-muted);">Attention</span>
+                </div>
+              </div>
+            </div>
+            <div class="line-chart-wrap">
+              <svg id="lineChartSvg" viewBox="0 0 500 200" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="lineGrad1" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" style="stop-color:rgba(108,99,255,0.3)"/>
+                    <stop offset="100%" style="stop-color:rgba(108,99,255,0)"/>
+                  </linearGradient>
+                  <linearGradient id="lineGrad2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" style="stop-color:rgba(67,233,123,0.3)"/>
+                    <stop offset="100%" style="stop-color:rgba(67,233,123,0)"/>
+                  </linearGradient>
+                </defs>
+                <!-- Grid lines -->
+                <line x1="0" y1="50"  x2="500" y2="50"  stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                <line x1="0" y1="100" x2="500" y2="100" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                <line x1="0" y1="150" x2="500" y2="150" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                <!-- Filled areas and lines drawn by JS -->
+                <path id="scoreArea" fill="url(#lineGrad1)" opacity="0.6"/>
+                <path id="scoreLine" fill="none" stroke="#6c63ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path id="attnArea"  fill="url(#lineGrad2)" opacity="0.4"/>
+                <path id="attnLine"  fill="none" stroke="#43e97b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 3"/>
+                <g id="chartDots"></g>
+              </svg>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:8px;" id="chartXLabels"></div>
+          </div>
+
+          <!-- Radar Chart -->
+          <div class="card">
+            <div class="flex items-center justify-between mb-16">
+              <h2 class="text-base font-bold">Subject Radar</h2>
+              <span class="badge badge-purple">Performance</span>
+            </div>
+            <canvas id="radarCanvas" width="220" height="220"></canvas>
+          </div>
+        </div>
+
+        <!-- Heatmap + Insights -->
+        <div class="grid-2 mb-24">
+          <!-- Study Heatmap -->
+          <div class="card">
+            <div class="flex items-center justify-between mb-16">
+              <h2 class="text-base font-bold">Study Activity</h2>
+              <span style="font-size:0.75rem;color:var(--text-muted);">Last 12 weeks</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:8px;">
+              <div style="display:flex;flex-direction:column;gap:2px;margin-top:2px;">
+                <span style="font-size:0.6rem;color:var(--text-muted);line-height:14px;">Mon</span>
+                <span style="font-size:0.6rem;color:var(--text-muted);line-height:14px;">Wed</span>
+                <span style="font-size:0.6rem;color:var(--text-muted);line-height:14px;">Fri</span>
+              </div>
+              <div id="heatmapGrid" style="display:grid;grid-template-rows:repeat(7,14px);grid-auto-flow:column;gap:2px;flex:1;"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:12px;">
+              <span style="font-size:0.72rem;color:var(--text-muted);">Less</span>
+              <div style="display:flex;gap:2px;">
+                <div style="width:12px;height:12px;border-radius:2px;background:rgba(108,99,255,0.1);"></div>
+                <div style="width:12px;height:12px;border-radius:2px;background:rgba(108,99,255,0.3);"></div>
+                <div style="width:12px;height:12px;border-radius:2px;background:rgba(108,99,255,0.5);"></div>
+                <div style="width:12px;height:12px;border-radius:2px;background:rgba(108,99,255,0.7);"></div>
+                <div style="width:12px;height:12px;border-radius:2px;background:var(--accent);"></div>
+              </div>
+              <span style="font-size:0.72rem;color:var(--text-muted);">More</span>
+            </div>
+          </div>
+
+          <!-- AI Insights -->
+          <div class="card">
+            <h2 class="text-base font-bold mb-16">🤖 AI Insights</h2>
+            <div id="insightsList" style="display:flex;flex-direction:column;gap:10px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SUBJECTS TAB ═══ -->
+      <div id="progress-subjects" class="tab-panel">
+        <div class="grid-2 mb-24" style="grid-template-columns:1.5fr 1fr;">
+          <div>
+            <h2 class="text-lg font-bold mb-16">Subject Performance</h2>
+            <div id="subjectProgressList" style="display:flex;flex-direction:column;gap:12px;"></div>
+          </div>
+
+          <!-- Subject Detail Panel -->
+          <div class="card" style="height:fit-content;position:sticky;top:100px;">
+            <h2 class="text-base font-bold mb-16">Subject Details</h2>
+            <div id="subjectDetailPanel">
+              <div class="empty-state">
+                <div class="icon">👆</div>
+                <div class="title">Select a Subject</div>
+                <div class="desc">Click any subject to see detailed analytics</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ ACHIEVEMENTS TAB ═══ -->
+      <div id="progress-achievements" class="tab-panel">
+        <div class="flex items-center justify-between mb-24">
+          <div>
+            <h2 class="text-lg font-bold">Achievements 🏆</h2>
+            <p class="text-sm text-secondary">Unlock badges by reaching milestones</p>
+          </div>
+          <div style="background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.2);padding:10px 20px;border-radius:var(--radius-pill);">
+            <span style="font-weight:700;color:var(--accent);" id="totalXp">1,240</span>
+            <span style="color:var(--text-muted);font-size:0.875rem;"> XP Total</span>
+          </div>
+        </div>
+
+        <div class="grid-2" id="achievementGrid" style="gap:12px;"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/charts.js"></script>
+  <script>
+    // ── Load real stats from API ─────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async () => {
+      const progress = await apiGetProgress();
+      if (progress && progress.success) {
+        const s = progress;
+        const el = id => document.getElementById(id);
+
+        if (el('stat-totalHours')) animateCount(el('stat-totalHours'), s.total_hours, 1, 'h');
+        if (el('stat-quizzes'))    animateCount(el('stat-quizzes'),    s.total_quizzes);
+        if (el('stat-avgScore'))   { el('stat-avgScore').textContent = s.avg_score + '%'; }
+        if (el('stat-attScore'))   animateCount(el('stat-attScore'),   s.avg_attention, 0, '');
+        if (el('totalHoursLabel')) el('totalHoursLabel').textContent = s.total_hours + 'h';
+        if (el('overallGpa'))      el('overallGpa').textContent = Math.min(4, (s.avg_score / 25)).toFixed(1);
+        if (el('topicsCoveredLabel')) el('topicsCoveredLabel').textContent = s.subjects?.reduce((a, sub) => a + sub.quiz_count, 0) || 0;
+      }
+    });
+
+    function animateCount(el, target, decimals = 0, suffix = '') {
+      const start = 0, dur = 1200;
+      const startTime = performance.now();
+      const frame = now => {
+        const t = Math.min((now - startTime) / dur, 1);
+        const val = (start + t * target).toFixed(decimals);
+        el.textContent = val + suffix;
+        if (t < 1) requestAnimationFrame(frame);
+      };
+      requestAnimationFrame(frame);
+    }
+  </script>
+</body>
+</html>

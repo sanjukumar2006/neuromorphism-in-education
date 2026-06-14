@@ -1,0 +1,10 @@
+simply run the run.py and it will start the server automatically on port 8080
+ 
+ 
+ if that does not work 
+
+in terminal the root dir of this folder past this 
+
+
+python -m http.server 8080 --directory frontend
+

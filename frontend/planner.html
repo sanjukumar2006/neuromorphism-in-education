@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Study Planner — Vortex</title>
+  <meta name="description" content="Manage your subjects, exam dates, and adaptive study schedule powered by AI." />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .subject-form-card {
+      background: linear-gradient(135deg, rgba(108,99,255,0.1), rgba(168,85,247,0.05));
+      border: 1px solid rgba(108,99,255,0.2);
+    }
+
+    .exam-countdown {
+      background: rgba(255,77,109,0.08);
+      border: 1px solid rgba(255,77,109,0.15);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .countdown-value {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--high);
+    }
+    .countdown-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+
+    .schedule-item {
+      display: flex;
+      gap: 16px;
+      padding: 18px 20px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    .schedule-item:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.1);
+    }
+    .schedule-item .color-bar {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      border-radius: var(--radius-pill) 0 0 var(--radius-pill);
+    }
+    .schedule-item .time-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 60px;
+      flex-shrink: 0;
+      text-align: center;
+    }
+    .schedule-item .time-start { font-weight: 700; font-size: 0.875rem; }
+    .schedule-item .time-dur   { font-size: 0.7rem; color: var(--text-muted); }
+    .schedule-item .content    { flex: 1; }
+    .schedule-item .s-name     { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+    .schedule-item .s-topics   { font-size: 0.8rem; color: var(--text-secondary); }
+    .schedule-item .actions    { display: flex; gap: 6px; align-items: center; }
+
+    .drag-handle {
+      color: var(--text-muted);
+      cursor: grab;
+      font-size: 1rem;
+      padding: 4px;
+      transition: var(--transition);
+    }
+    .drag-handle:hover { color: var(--accent); }
+    .schedule-item.dragging { opacity: 0.5; border: 2px dashed var(--accent); }
+    .schedule-item.drag-over { border-color: var(--accent); background: rgba(108,99,255,0.1); }
+
+    .score-slider-wrap {
+      position: relative;
+    }
+    .score-label {
+      position: absolute;
+      right: 0;
+      top: -24px;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .day-chip {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: var(--transition);
+      color: var(--text-secondary);
+      background: transparent;
+      font-family: var(--font-main);
+    }
+    .day-chip.selected {
+      background: rgba(108,99,255,0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .day-chip:hover { border-color: rgba(255,255,255,0.2); color: #fff; }
+
+    .subject-list-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      transition: var(--transition);
+    }
+    .subject-list-item:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
+
+    /* Pomodoro Timer */
+    .pomodoro-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .pomodoro-ring {
+      position: relative;
+      width: 160px; height: 160px;
+    }
+    .pomodoro-ring svg { transform: rotate(-90deg); }
+    .pomodoro-ring .ring-track { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 10; }
+    .pomodoro-ring .ring-fill  {
+      fill: none;
+      stroke: url(#pomGrad);
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-dasharray: 440;
+      stroke-dashoffset: 440;
+      transition: stroke-dashoffset 1s linear;
+    }
+    .pomodoro-ring .inner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .pom-time { font-family: var(--font-display); font-size: 2rem; font-weight: 800; }
+    .pom-label { font-size: 0.7rem; color: var(--text-muted); }
+    .pom-controls { display: flex; gap: 10px; }
+
+    .pom-mode {
+      padding: 4px 12px;
+      border-radius: var(--radius-pill);
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: var(--font-main);
+      transition: var(--transition);
+    }
+    .pom-mode.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="ambient ambient-1"></div>
+  <div class="ambient ambient-2"></div>
+  <div class="ambient ambient-3"></div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Nav -->
+  <nav class="nav" id="mainNav">
+    <a href="index.html" class="nav-logo">
+      <div class="logo-icon">⚡</div>
+      Vortex
+    </a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="planner.html" class="active">Planner</a></li>
+      <li><a href="quiz.html">Quiz</a></li>
+      <li><a href="progress.html">Progress</a></li>
+      <li><a href="subjects.html">Subjects</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="btn btn-primary btn-sm" onclick="openAddSubjectModal()">+ Add Subject</button>
+      <div class="nav-user" onclick="window.location='dashboard.html'">
+        <div class="nav-avatar" id="navAvatar">S</div>
+        <span id="navName">Sanju</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <span class="sidebar-section-title">Main</span>
+      <a href="dashboard.html" class="sidebar-link"><span class="icon">🏠</span> Dashboard</a>
+      <a href="planner.html"   class="sidebar-link active"><span class="icon">📅</span> Study Planner</a>
+      <a href="quiz.html"      class="sidebar-link"><span class="icon">🧠</span> Quiz Mode</a>
+      <a href="progress.html"  class="sidebar-link"><span class="icon">📈</span> Progress</a>
+      <a href="subjects.html"  class="sidebar-link"><span class="icon">📚</span> Subjects</a>
+
+      <span class="sidebar-section-title">Tools</span>
+      <a href="#" class="sidebar-link"><span class="icon">🔄</span> Revision Engine</a>
+      <a href="#" class="sidebar-link"><span class="icon">🎯</span> Attention Tracker</a>
+      <a href="#" class="sidebar-link"><span class="icon">⏱️</span> Study Timer</a>
+
+      <!-- Pomodoro -->
+      <div style="margin-top:16px;padding:16px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-md);">
+        <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;">Pomodoro Timer</div>
+        <div class="pomodoro-wrap">
+          <div style="display:flex;gap:4px;margin-bottom:8px;">
+            <button class="pom-mode active" id="pom-focus" onclick="setPomMode('focus',25)">Focus</button>
+            <button class="pom-mode" id="pom-short" onclick="setPomMode('short',5)">Short</button>
+            <button class="pom-mode" id="pom-long"  onclick="setPomMode('long',15)">Long</button>
+          </div>
+          <div class="pomodoro-ring">
+            <svg width="160" height="160" viewBox="0 0 160 160">
+              <defs>
+                <linearGradient id="pomGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" style="stop-color:#6c63ff"/>
+                  <stop offset="100%" style="stop-color:#a855f7"/>
+                </linearGradient>
+              </defs>
+              <circle cx="80" cy="80" r="70" class="ring-track"/>
+              <circle cx="80" cy="80" r="70" class="ring-fill" id="pomRingFill"/>
+            </svg>
+            <div class="inner">
+              <div class="pom-time" id="pomTime">25:00</div>
+              <div class="pom-label" id="pomModeLabel">Focus</div>
+            </div>
+          </div>
+          <div class="pom-controls">
+            <button class="btn btn-secondary btn-sm" id="pomBtn" onclick="togglePomodoro()">▶ Start</button>
+            <button class="btn btn-ghost btn-sm" onclick="resetPomodoro()">↺</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content page-enter">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Study Planner 📅</h1>
+          <p class="page-subtitle">Your adaptive study schedule, powered by AI</p>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <div class="tabs" style="background:transparent;border:1px solid var(--border);">
+            <button class="tab-btn active" id="tab-schedule" onclick="switchTab('schedule')">Schedule</button>
+            <button class="tab-btn" id="tab-subjects" onclick="switchTab('subjects')">Subjects</button>
+          </div>
+          <button class="btn btn-secondary" id="aiPlanBtn" onclick="generateAIPlan()">🤖 AI Plan</button>
+          <button class="btn btn-primary" onclick="generatePlan()">⚡ Generate Plan</button>
+        </div>
+      </div>
+
+      <!-- Exam Countdowns -->
+      <div class="grid-4 mb-24 stagger" id="examCountdowns"></div>
+
+      <!-- AI Plan Result (hidden until generated) -->
+      <div id="aiPlanResult" style="display:none;" class="card mb-24"></div>
+
+      <!-- Schedule Tab -->
+      <div id="tab-content-schedule">
+        <div class="grid-2" style="grid-template-columns:1fr 340px;gap:20px;">
+
+          <!-- Schedule List -->
+          <div class="card">
+            <div class="flex items-center justify-between mb-20">
+              <h2 class="text-lg font-bold">Today's Schedule</h2>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span style="font-size:0.8rem;color:var(--text-muted);">Drag to reorder</span>
+                <span style="font-size:0.8rem;background:rgba(108,99,255,0.1);color:var(--accent);padding:3px 10px;border-radius:var(--radius-pill);font-weight:600;" id="planDate"></span>
+              </div>
+            </div>
+            <div id="scheduleList" style="display:flex;flex-direction:column;gap:10px;">
+              <!-- dynamically filled -->
+            </div>
+            <div class="empty-state hidden" id="scheduleEmpty">
+              <div class="icon">📅</div>
+              <div class="title">No schedule yet</div>
+              <div class="desc">Add subjects and click "Generate Plan"</div>
+            </div>
+          </div>
+
+          <!-- Upcoming Revisions -->
+          <div style="display:flex;flex-direction:column;gap:20px;">
+            <div class="card">
+              <h2 class="text-base font-bold mb-16">📆 Upcoming Revisions</h2>
+              <div class="timeline" id="revisionTimeline"></div>
+            </div>
+
+            <!-- Study Tips -->
+            <div class="card" style="background:linear-gradient(135deg,rgba(108,99,255,0.1),rgba(0,201,255,0.05));border-color:rgba(108,99,255,0.2);">
+              <h2 class="text-base font-bold mb-12">💡 AI Study Tip</h2>
+              <p style="font-size:0.875rem;color:var(--text-secondary);line-height:1.7;" id="studyTip">
+                Loading your personalized tip...
+              </p>
+              <button class="btn btn-sm btn-ghost mt-12" onclick="refreshTip()">↻ New Tip</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subjects Tab -->
+      <div id="tab-content-subjects" class="hidden">
+        <div class="grid-2" style="grid-template-columns:1.4fr 1fr;gap:20px;">
+          <div>
+            <div style="display:flex;flex-direction:column;gap:12px;" id="subjectsList"></div>
+          </div>
+          <!-- Add Subject Form -->
+          <div class="card subject-form-card" style="height:fit-content;position:sticky;top:100px;">
+            <h2 class="text-lg font-bold mb-20">+ Add Subject</h2>
+            <div class="form-group mb-16">
+              <label class="form-label">Subject Name</label>
+              <input class="form-input" type="text" id="subjectName" placeholder="e.g., Mathematics" />
+            </div>
+            <div class="form-group mb-16">
+              <label class="form-label">Emoji</label>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;" id="emojiPicker">
+                <button onclick="selectEmoji(this,'📐')" class="subject-pill">📐</button>
+                <button onclick="selectEmoji(this,'⚛️')" class="subject-pill">⚛️</button>
+                <button onclick="selectEmoji(this,'🧪')" class="subject-pill">🧪</button>
+                <button onclick="selectEmoji(this,'🌿')" class="subject-pill">🌿</button>
+                <button onclick="selectEmoji(this,'📚')" class="subject-pill">📚</button>
+                <button onclick="selectEmoji(this,'🏛️')" class="subject-pill">🏛️</button>
+                <button onclick="selectEmoji(this,'🌍')" class="subject-pill">🌍</button>
+                <button onclick="selectEmoji(this,'💻')" class="subject-pill">💻</button>
+                <button onclick="selectEmoji(this,'📊')" class="subject-pill">📊</button>
+                <button onclick="selectEmoji(this,'🎨')" class="subject-pill">🎨</button>
+              </div>
+            </div>
+            <div class="form-group mb-16">
+              <label class="form-label">Current Score (%)</label>
+              <div class="score-slider-wrap mt-8">
+                <span class="score-label" id="scoreLabel">65</span>
+                <input type="range" id="scoreSlider" min="0" max="100" value="65" oninput="updateScoreLabel()" style="margin-top:16px;"/>
+              </div>
+            </div>
+            <div class="form-group mb-16">
+              <label class="form-label">Exam Date</label>
+              <input class="form-input" type="date" id="examDate" />
+            </div>
+            <div class="form-group mb-24">
+              <label class="form-label">Color</label>
+              <div style="display:flex;gap:8px;margin-top:4px;" id="colorPicker">
+                <div onclick="selectColor(this,'#6c63ff')" style="width:28px;height:28px;border-radius:50%;background:#6c63ff;cursor:pointer;border:2px solid #fff;" class="color-opt selected"></div>
+                <div onclick="selectColor(this,'#ff6584')" style="width:28px;height:28px;border-radius:50%;background:#ff6584;cursor:pointer;border:2px solid transparent;" class="color-opt"></div>
+                <div onclick="selectColor(this,'#43e97b')" style="width:28px;height:28px;border-radius:50%;background:#43e97b;cursor:pointer;border:2px solid transparent;" class="color-opt"></div>
+                <div onclick="selectColor(this,'#f7971e')" style="width:28px;height:28px;border-radius:50%;background:#f7971e;cursor:pointer;border:2px solid transparent;" class="color-opt"></div>
+                <div onclick="selectColor(this,'#00c9ff')" style="width:28px;height:28px;border-radius:50%;background:#00c9ff;cursor:pointer;border:2px solid transparent;" class="color-opt"></div>
+              </div>
+            </div>
+            <button class="btn btn-primary w-full" onclick="addSubject()">Add Subject</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Add Subject Modal (mobile) -->
+  <div class="modal-overlay" id="addSubjectModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">+ Add Subject</h2>
+        <button class="modal-close" onclick="closeModal('addSubjectModal')">✕</button>
+      </div>
+      <p class="text-sm text-secondary mb-24">Switch to the Subjects tab to add or manage subjects.</p>
+      <button class="btn btn-primary w-full" onclick="switchTab('subjects');closeModal('addSubjectModal')">Go to Subjects →</button>
+    </div>
+  </div>
+
+  <button class="fab" onclick="generatePlan()" data-tip="Generate Plan">⚡</button>
+
+  <script src="js/main.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/planner.js"></script>
+  <script>
+    // ── AI Plan Generation via Backend ─────────────────────────────────────
+    async function generateAIPlan() {
+      const btn = document.getElementById('aiPlanBtn');
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Generating...'; }
+
+      const res = await apiGeneratePlan();
+
+      if (btn) { btn.disabled = false; btn.textContent = '🤖 Generate AI Plan'; }
+
+      const container = document.getElementById('aiPlanResult');
+      if (!container) return;
+
+      if (res && res.success) {
+        const priorityColors = { High: '#ff6584', Medium: '#ffd166', Low: '#43e97b' };
+        container.innerHTML = `
+          <div style="font-weight:700;font-size:0.875rem;margin-bottom:12px;">
+            📅 AI Study Schedule — ${res.total_subjects} subjects ranked by priority
+          </div>
+          ${res.schedule.map((item, i) => `
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;
+                        background:rgba(255,255,255,0.03);border:1px solid var(--border);
+                        border-radius:var(--radius-md);margin-bottom:8px;">
+              <span style="font-size:1.4rem;">${item.emoji}</span>
+              <div style="flex:1;">
+                <div style="font-weight:700;font-size:0.9rem;">${item.topic}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">
+                  Score: ${item.score}% &nbsp;|&nbsp; Priority Score: ${item.priority_score}
+                </div>
+              </div>
+              <span style="background:${priorityColors[item.priority]}18;
+                           color:${priorityColors[item.priority]};
+                           border:1px solid ${priorityColors[item.priority]}40;
+                           padding:3px 10px;border-radius:var(--radius-pill);
+                           font-size:0.72rem;font-weight:700;">
+                ${item.priority}
+              </span>
+              <span style="font-weight:700;color:var(--accent);font-size:0.875rem;min-width:50px;text-align:right;">
+                ${item.study_time}m
+              </span>
+            </div>`).join('')}
+        `;
+        container.style.display = 'block';
+        showToast('🤖 AI plan generated!', 'success', '⚡');
+      } else {
+        container.innerHTML = `<div style="color:var(--text-muted);font-size:0.875rem;padding:16px;text-align:center;">
+          ⚡ Start backend server (<code>python run.py</code>) to generate AI plans.
+        </div>`;
+        container.style.display = 'block';
+      }
+    }
+  </script>
+</body>
+</html>

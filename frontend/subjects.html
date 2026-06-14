@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Class 12 Subjects — Vortex Study Planner</title>
+  <meta name="description" content="Explore all Class 12 CBSE subjects, topics, and study resources in one place with Vortex." />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ── Subject Hero ── */
+    .subjects-hero {
+      background: linear-gradient(135deg, rgba(108,99,255,0.15) 0%, rgba(0,201,255,0.08) 50%, rgba(255,101,132,0.08) 100%);
+      border: 1px solid rgba(108,99,255,0.2);
+      border-radius: var(--radius-xl);
+      padding: 40px;
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+    .subjects-hero::before {
+      content: '';
+      position: absolute;
+      top: -80px; right: -80px;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(108,99,255,0.2), transparent 70%);
+      pointer-events: none;
+    }
+    .subjects-hero::after {
+      content: '';
+      position: absolute;
+      bottom: -60px; left: -60px;
+      width: 250px; height: 250px;
+      background: radial-gradient(circle, rgba(0,201,255,0.15), transparent 70%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 18px;
+      background: rgba(108,99,255,0.15);
+      border: 1px solid rgba(108,99,255,0.3);
+      border-radius: var(--radius-pill);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+    .hero-sub {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      max-width: 500px;
+      margin: 0 auto 24px;
+      line-height: 1.7;
+    }
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-stat-item {
+      text-align: center;
+    }
+    .hero-stat-val {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 800;
+      background: var(--grad-purple);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-stat-lbl {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ── Search ── */
+    .search-bar-wrap {
+      position: relative;
+      margin-bottom: 28px;
+    }
+    .search-bar-wrap .search-icon {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1rem;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .search-bar-wrap input {
+      padding-left: 48px;
+      height: 52px;
+      font-size: 1rem;
+      border-radius: var(--radius-lg);
+    }
+
+    /* ── Subject Card (big) ── */
+    .subject-big-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      transition: var(--transition);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .subject-big-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent);
+      pointer-events: none;
+    }
+    .subject-big-card:hover {
+      border-color: rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+    }
+    .subject-big-card .color-strip {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    }
+    .subject-big-card .s-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .subject-big-card .s-emoji-wrap {
+      width: 60px; height: 60px;
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      flex-shrink: 0;
+    }
+    .subject-big-card .s-name {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+    .subject-big-card .s-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ── Progress ring ── */
+    .progress-ring-wrap {
+      position: relative;
+      width: 56px; height: 56px;
+      flex-shrink: 0;
+    }
+    .progress-ring-wrap svg { transform: rotate(-90deg); }
+    .ring-pct {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 800;
+    }
+
+    /* ── Topic chips in card ── */
+    .topic-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 16px 0;
+    }
+    .topic-chip {
+      padding: 4px 10px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius-pill);
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+    .topic-chip:hover {
+      background: rgba(108,99,255,0.15);
+      border-color: rgba(108,99,255,0.3);
+      color: var(--accent);
+    }
+    .topic-chip.done {
+      background: rgba(6,214,160,0.1);
+      border-color: rgba(6,214,160,0.25);
+      color: var(--low);
+    }
+    .topic-chip.done::before { content: '✓ '; }
+
+    /* ── Card footer ── */
+    .s-footer {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Filter tabs ── */
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .filter-tab {
+      padding: 8px 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: transparent;
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: var(--font-main);
+    }
+    .filter-tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(108,99,255,0.4);
+    }
+    .filter-tab:hover:not(.active) { color: #fff; border-color: rgba(255,255,255,0.2); }
+
+    /* ── Grid override ── */
+    .subjects-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 900px) {
+      .subjects-grid { grid-template-columns: 1fr; }
+      .hero-title { font-size: 1.8rem; }
+    }
+
+    /* ── Topic Detail Modal ── */
+    .topic-modal-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+    .topic-modal-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      transition: var(--transition);
+      cursor: pointer;
+    }
+    .topic-modal-item:hover {
+      background: rgba(108,99,255,0.08);
+      border-color: rgba(108,99,255,0.2);
+    }
+    .topic-check {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      flex-shrink: 0;
+      transition: var(--transition);
+    }
+    .topic-modal-item.done .topic-check {
+      background: var(--low);
+      border-color: var(--low);
+      color: #000;
+    }
+
+    /* ── Syllabus Progress Panel ── */
+    .syllabus-overview {
+      background: linear-gradient(135deg, rgba(108,99,255,0.08), rgba(0,201,255,0.05));
+      border: 1px solid rgba(108,99,255,0.2);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      margin-bottom: 32px;
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient ambient-1"></div>
+  <div class="ambient ambient-2"></div>
+  <div class="ambient ambient-3"></div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Nav -->
+  <nav class="nav" id="mainNav">
+    <a href="index.html" class="nav-logo">
+      <div class="logo-icon">⚡</div>
+      Vortex
+    </a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="planner.html">Planner</a></li>
+      <li><a href="quiz.html">Quiz</a></li>
+      <li><a href="progress.html">Progress</a></li>
+      <li><a href="subjects.html" class="active">Subjects</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div class="nav-user" onclick="window.location='dashboard.html'">
+        <div class="nav-avatar" id="navAvatar">S</div>
+        <span id="navName">Sanju</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <span class="sidebar-section-title">Main</span>
+      <a href="dashboard.html" class="sidebar-link"><span class="icon">🏠</span> Dashboard</a>
+      <a href="planner.html"   class="sidebar-link"><span class="icon">📅</span> Study Planner</a>
+      <a href="quiz.html"      class="sidebar-link"><span class="icon">🧠</span> Quiz Mode</a>
+      <a href="progress.html"  class="sidebar-link"><span class="icon">📈</span> Progress</a>
+      <a href="subjects.html"  class="sidebar-link active"><span class="icon">📚</span> Subjects</a>
+
+      <span class="sidebar-section-title">Streams</span>
+      <button class="sidebar-link" style="border:none;background:none;cursor:pointer;width:100%;text-align:left;" onclick="filterStream('science')" id="btn-science">
+        <span class="icon">🔬</span> Science
+      </button>
+      <button class="sidebar-link" style="border:none;background:none;cursor:pointer;width:100%;text-align:left;" onclick="filterStream('commerce')" id="btn-commerce">
+        <span class="icon">💼</span> Commerce
+      </button>
+      <button class="sidebar-link" style="border:none;background:none;cursor:pointer;width:100%;text-align:left;" onclick="filterStream('all')" id="btn-all">
+        <span class="icon">📚</span> All Subjects
+      </button>
+
+      <span class="sidebar-section-title">Quick Stats</span>
+      <div style="padding:16px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-md);">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:0.75rem;color:var(--text-muted);">Total Topics</span>
+          <span style="font-weight:700;color:var(--accent);" id="totalTopicsCount">0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:0.75rem;color:var(--text-muted);">Completed</span>
+          <span style="font-weight:700;color:var(--low);" id="completedTopicsCount">0</span>
+        </div>
+        <div class="progress-bar mt-8" style="height:6px;">
+          <div class="progress-fill" id="overallProgress" style="width:0%;"></div>
+        </div>
+        <div style="text-align:right;font-size:0.72rem;color:var(--text-muted);margin-top:4px;" id="overallPct">0% complete</div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content page-enter">
+
+      <!-- Hero Banner -->
+      <div class="subjects-hero">
+        <div class="hero-badge">🎓 Class 12 · CBSE Board</div>
+        <div class="hero-title">Your Complete Syllabus</div>
+        <div class="hero-sub">All subjects, all topics — track your progress chapter by chapter and quiz yourself anytime.</div>
+        <div class="hero-stats">
+          <div class="hero-stat-item">
+            <div class="hero-stat-val" id="statSubjects">8</div>
+            <div class="hero-stat-lbl">Subjects</div>
+          </div>
+          <div class="hero-stat-item">
+            <div class="hero-stat-val" id="statTopicsHero">0</div>
+            <div class="hero-stat-lbl">Total Topics</div>
+          </div>
+          <div class="hero-stat-item">
+            <div class="hero-stat-val" id="statDoneHero">0</div>
+            <div class="hero-stat-lbl">Topics Done</div>
+          </div>
+          <div class="hero-stat-item">
+            <div class="hero-stat-val" id="statNextExam">—</div>
+            <div class="hero-stat-lbl">Next Exam (days)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search + Filter -->
+      <div class="search-bar-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="form-input" type="text" id="searchInput" placeholder="Search subjects or topics..." oninput="filterSubjects()" />
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="filter-tabs" id="filterTabs">
+        <button class="filter-tab active" id="ft-all" onclick="setFilter('all')">All (8)</button>
+        <button class="filter-tab" id="ft-science" onclick="setFilter('science')">🔬 Science (4)</button>
+        <button class="filter-tab" id="ft-commerce" onclick="setFilter('commerce')">💼 Commerce (2)</button>
+        <button class="filter-tab" id="ft-english" onclick="setFilter('english')">📚 Languages (1)</button>
+        <button class="filter-tab" id="ft-cs" onclick="setFilter('cs')">💻 CS (1)</button>
+      </div>
+
+      <!-- Subjects Grid -->
+      <div class="subjects-grid" id="subjectsGrid">
+        <!-- Dynamically rendered -->
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Topic Detail Modal -->
+  <div class="modal-overlay" id="topicModal">
+    <div class="modal" style="max-width:560px;">
+      <div class="modal-header">
+        <div>
+          <span id="modalSubjectEmoji" style="font-size:1.5rem;"></span>
+          <span class="modal-title" id="modalSubjectName" style="margin-left:8px;">Subject</span>
+        </div>
+        <button class="modal-close" onclick="closeModal('topicModal')">✕</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:16px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-md);">
+        <div style="flex:1;">
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;">Progress</div>
+          <div class="progress-bar" style="height:8px;">
+            <div class="progress-fill" id="modalProgressFill" style="width:0%;"></div>
+          </div>
+        </div>
+        <span id="modalProgressText" style="font-weight:800;font-size:1.2rem;font-family:var(--font-display);color:var(--accent);">0%</span>
+      </div>
+      <div class="topic-modal-list" id="topicModalList"></div>
+      <div style="display:flex;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+        <button class="btn btn-primary" style="flex:1;" onclick="quizThisSubject()">🧠 Quiz This Subject</button>
+        <button class="btn btn-secondary" onclick="markAllDone()">✓ Mark All Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    // ── Data ──────────────────────────────────
+    const CLASS12_SUBJECTS = [
+      {
+        name: 'Mathematics', emoji: '📐', color: '#6c63ff', stream: 'science',
+        examDate: '2026-07-15', desc: 'Calculus, Algebra, Vectors & Probability',
+        topics: [
+          'Relations & Functions','Inverse Trigonometry','Matrices',
+          'Determinants','Continuity & Differentiability',
+          'Applications of Derivatives','Integrals',
+          'Applications of Integrals','Differential Equations',
+          'Vectors','Three Dimensional Geometry',
+          'Linear Programming','Probability'
+        ]
+      },
+      {
+        name: 'Physics', emoji: '⚛️', color: '#ff6584', stream: 'science',
+        examDate: '2026-07-20', desc: 'Electrostatics, Optics & Modern Physics',
+        topics: [
+          'Electrostatics','Current Electricity',
+          'Magnetic Effects of Current','Magnetism & Matter',
+          'Electromagnetic Induction','Alternating Current',
+          'Electromagnetic Waves','Ray Optics',
+          'Wave Optics','Dual Nature of Radiation',
+          'Atoms','Nuclei','Semiconductors','Communication Systems'
+        ]
+      },
+      {
+        name: 'Chemistry', emoji: '🧪', color: '#43e97b', stream: 'science',
+        examDate: '2026-07-18', desc: 'Organic, Inorganic & Physical Chemistry',
+        topics: [
+          'Solutions','Electrochemistry','Chemical Kinetics',
+          'Surface Chemistry','General Principles of Isolation',
+          'p-Block Elements','d & f Block Elements',
+          'Coordination Compounds','Haloalkanes & Haloarenes',
+          'Alcohols, Phenols & Ethers','Aldehydes & Ketones',
+          'Amines','Biomolecules','Polymers','Chemistry in Everyday Life'
+        ]
+      },
+      {
+        name: 'Biology', emoji: '🌿', color: '#06d6a0', stream: 'science',
+        examDate: '2026-07-22', desc: 'Genetics, Ecology & Biotechnology',
+        topics: [
+          'Reproduction in Organisms','Sexual Reproduction in Plants',
+          'Human Reproduction','Reproductive Health',
+          'Principles of Inheritance','Molecular Basis of Inheritance',
+          'Evolution','Human Health & Disease',
+          'Strategies for Enhancement in Food Production',
+          'Microbes in Human Welfare','Biotechnology Principles',
+          'Biotechnology Applications','Organisms & Populations',
+          'Ecosystem','Biodiversity & Conservation','Environmental Issues'
+        ]
+      },
+      {
+        name: 'Computer Science', emoji: '💻', color: '#00c9ff', stream: 'cs',
+        examDate: '2026-07-25', desc: 'Python, OOP, Networks & Databases',
+        topics: [
+          'Python Revision Tour','Functions in Python',
+          'Using Python Libraries','File Handling',
+          'Exception Handling','Object Oriented Programming',
+          'Inheritance','Database Concepts',
+          'Structured Query Language (SQL)',
+          'Computer Networks','Communication Technologies',
+          'Stack','Queue','Sorting Algorithms','Boolean Algebra'
+        ]
+      },
+      {
+        name: 'English', emoji: '📚', color: '#f7971e', stream: 'english',
+        examDate: '2026-07-10', desc: 'Flamingo, Vistas & Writing Skills',
+        topics: [
+          'The Last Lesson','Lost Spring','Deep Water',
+          'The Rattrap','Indigo','Poets & Pancakes',
+          'The Interview','Going Places',
+          'My Mother at Sixty-Six','An Elementary School Classroom',
+          'Keeping Quiet','A Thing of Beauty',
+          'A Roadside Stand','Aunt Jennifers Tigers',
+          'The Tiger King','The Enemy','Should Wizard Hit Mommy?',
+          'On the Face of It','Evans Tries an O-Level',
+          'Memories of Childhood','Letter Writing',
+          'Article Writing','Speech Writing',
+          'Report Writing','Grammar & Usage'
+        ]
+      },
+      {
+        name: 'Accountancy', emoji: '📒', color: '#a855f7', stream: 'commerce',
+        examDate: '2026-07-12', desc: 'Partnership, Companies & Financial Analysis',
+        topics: [
+          'Partnership: Fundamental Concepts',
+          'Goodwill: Nature & Valuation',
+          'Change in Profit Sharing Ratio',
+          'Admission of a Partner',
+          'Retirement & Death of a Partner',
+          'Dissolution of Partnership Firm',
+          'Accounting for Share Capital',
+          'Issue & Forfeiture of Shares',
+          'Issue of Debentures',
+          'Redemption of Debentures',
+          'Financial Statements: Non-Manufacturing',
+          'Financial Statements: Manufacturing',
+          'Tools of Financial Statement Analysis',
+          'Accounting Ratios','Cash Flow Statement'
+        ]
+      },
+      {
+        name: 'Economics', emoji: '📊', color: '#f59e0b', stream: 'commerce',
+        examDate: '2026-07-17', desc: 'Micro & Macro Economics — CBSE',
+        topics: [
+          'Introduction to Microeconomics',
+          'Consumer Equilibrium & Demand',
+          'Producer Behaviour & Supply',
+          'Forms of Market & Price Determination',
+          'Introduction to Macroeconomics',
+          'National Income Accounting',
+          'Money & Banking',
+          'Determination of Income & Employment',
+          'Government Budget & Economy',
+          'Balance of Payments','Foreign Exchange Rate'
+        ]
+      },
+    ];
+
+    const STREAM_MAP = {
+      science: ['Mathematics','Physics','Chemistry','Biology'],
+      commerce: ['Accountancy','Economics'],
+      english: ['English'],
+      cs: ['Computer Science'],
+    };
+
+    let activeFilter = 'all';
+    let activeModalSubject = null;
+    const completedTopics = Store.get('completed_topics', {});
+
+    // ── Init ─────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      renderAllSubjects();
+      updateSidebarStats();
+      updateHeroStats();
+    });
+
+    function updateHeroStats() {
+      let total = 0, done = 0;
+      CLASS12_SUBJECTS.forEach(s => {
+        total += s.topics.length;
+        const key = s.name;
+        done += (completedTopics[key] || []).length;
+      });
+      document.getElementById('statTopicsHero').textContent = total;
+      document.getElementById('statDoneHero').textContent = done;
+
+      // Next exam
+      const now = new Date();
+      const upcoming = CLASS12_SUBJECTS
+        .map(s => ({ name: s.name, days: Math.ceil((new Date(s.examDate) - now) / 86400000) }))
+        .filter(s => s.days > 0)
+        .sort((a,b) => a.days - b.days);
+      if (upcoming.length > 0) {
+        document.getElementById('statNextExam').textContent = upcoming[0].days;
+      }
+    }
+
+    function updateSidebarStats() {
+      let total = 0, done = 0;
+      CLASS12_SUBJECTS.forEach(s => {
+        total += s.topics.length;
+        done += (completedTopics[s.name] || []).length;
+      });
+      document.getElementById('totalTopicsCount').textContent = total;
+      document.getElementById('completedTopicsCount').textContent = done;
+      const pct = total > 0 ? Math.round((done/total)*100) : 0;
+      document.getElementById('overallProgress').style.width = pct + '%';
+      document.getElementById('overallPct').textContent = pct + '% complete';
+    }
+
+    // ── Render ───────────────────────────────
+    function renderAllSubjects(searchQ = '') {
+      const grid = document.getElementById('subjectsGrid');
+      let subjects = CLASS12_SUBJECTS;
+
+      if (activeFilter !== 'all') {
+        const names = STREAM_MAP[activeFilter] || [];
+        subjects = subjects.filter(s => names.includes(s.name));
+      }
+      if (searchQ) {
+        const q = searchQ.toLowerCase();
+        subjects = subjects.filter(s =>
+          s.name.toLowerCase().includes(q) ||
+          s.topics.some(t => t.toLowerCase().includes(q)) ||
+          s.desc.toLowerCase().includes(q)
+        );
+      }
+
+      if (subjects.length === 0) {
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted);">
+          <div style="font-size:3rem;margin-bottom:12px;">🔍</div>
+          <div style="font-weight:600;">No subjects found</div>
+          <div style="font-size:0.875rem;margin-top:4px;">Try a different search or filter</div>
+        </div>`;
+        return;
+      }
+
+      grid.innerHTML = subjects.map(s => renderSubjectCard(s)).join('');
+    }
+
+    function renderSubjectCard(s) {
+      const done  = (completedTopics[s.name] || []).length;
+      const total = s.topics.length;
+      const pct   = total > 0 ? Math.round((done/total)*100) : 0;
+      const examDays = Math.ceil((new Date(s.examDate) - new Date()) / 86400000);
+      const urgency  = examDays < 10 ? 'var(--high)' : examDays < 20 ? 'var(--medium)' : 'var(--low)';
+
+      // Circumference for ring (r=22)
+      const circ = 2 * Math.PI * 22;
+      const offset = circ - (pct / 100) * circ;
+
+      // Show first 6 topics + overflow count
+      const visibleTopics = s.topics.slice(0, 7);
+      const extraCount    = s.topics.length - 7;
+
+      return `
+        <div class="subject-big-card" onclick="openSubjectModal('${s.name}')">
+          <div class="color-strip" style="background:${s.color};"></div>
+
+          <div class="s-header">
+            <div style="display:flex;gap:14px;align-items:flex-start;flex:1;">
+              <div class="s-emoji-wrap" style="background:${s.color}22;">
+                ${s.emoji}
+              </div>
+              <div style="flex:1;">
+                <div class="s-name">${s.name}</div>
+                <div class="s-meta">${s.desc}</div>
+                <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+                  <span class="badge" style="background:${urgency}18;color:${urgency};border:1px solid ${urgency}40;">
+                    📅 ${examDays > 0 ? examDays + ' days' : 'Today!'}
+                  </span>
+                  <span class="badge badge-purple">${total} topics</span>
+                </div>
+              </div>
+            </div>
+            <!-- Ring -->
+            <div class="progress-ring-wrap">
+              <svg width="56" height="56" viewBox="0 0 56 56">
+                <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
+                <circle cx="28" cy="28" r="22" fill="none" stroke="${s.color}" stroke-width="5"
+                  stroke-linecap="round"
+                  stroke-dasharray="${circ.toFixed(1)}"
+                  stroke-dashoffset="${offset.toFixed(1)}"
+                  style="transition:stroke-dashoffset 1s ease;"/>
+              </svg>
+              <div class="ring-pct" style="color:${s.color};">${pct}%</div>
+            </div>
+          </div>
+
+          <!-- Progress bar -->
+          <div style="margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;">
+              <span>Progress</span>
+              <span style="font-weight:700;">${done}/${total} topics done</span>
+            </div>
+            <div class="progress-bar" style="height:5px;">
+              <div class="progress-fill" style="width:${pct}%;background:${s.color};"></div>
+            </div>
+          </div>
+
+          <!-- Topic chips -->
+          <div class="topic-chips">
+            ${visibleTopics.map(t => {
+              const isDone = (completedTopics[s.name] || []).includes(t);
+              return `<span class="topic-chip ${isDone ? 'done' : ''}">${t}</span>`;
+            }).join('')}
+            ${extraCount > 0 ? `<span class="topic-chip" style="background:rgba(108,99,255,0.1);color:var(--accent);border-color:rgba(108,99,255,0.2);">+${extraCount} more</span>` : ''}
+          </div>
+
+          <!-- Footer actions -->
+          <div class="s-footer">
+            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); quizSubjectDirect('${s.name}')">🧠 Quiz</button>
+            <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openSubjectModal('${s.name}')">📋 All Topics</button>
+            <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);display:flex;align-items:center;gap:4px;">
+              ${pct === 100 ? '🏆 Complete!' : pct > 50 ? '⚡ Good pace' : '📖 Keep going'}
+            </span>
+          </div>
+        </div>`;
+    }
+
+    // ── Topic Modal ───────────────────────────
+    function openSubjectModal(name) {
+      activeModalSubject = name;
+      const s = CLASS12_SUBJECTS.find(x => x.name === name);
+      if (!s) return;
+
+      document.getElementById('modalSubjectEmoji').textContent = s.emoji;
+      document.getElementById('modalSubjectName').textContent = s.name;
+
+      renderTopicModal(s);
+      openModal('topicModal');
+    }
+
+    function renderTopicModal(s) {
+      const done = completedTopics[s.name] || [];
+      const pct  = Math.round((done.length / s.topics.length) * 100);
+
+      document.getElementById('modalProgressFill').style.width = pct + '%';
+      document.getElementById('modalProgressFill').style.background = s.color;
+      document.getElementById('modalProgressText').textContent = pct + '%';
+      document.getElementById('modalProgressText').style.color = s.color;
+
+      const list = document.getElementById('topicModalList');
+      list.innerHTML = s.topics.map((t, i) => {
+        const isDone = done.includes(t);
+        return `
+          <div class="topic-modal-item ${isDone ? 'done' : ''}" onclick="toggleTopic('${s.name}','${t}')">
+            <div class="topic-check">${isDone ? '✓' : ''}</div>
+            <div style="flex:1;">
+              <div style="font-weight:600;font-size:0.875rem;">${t}</div>
+              <div style="font-size:0.7rem;color:var(--text-muted);">Chapter ${i+1}</div>
+            </div>
+            ${isDone ? '<span style="font-size:0.75rem;color:var(--low);font-weight:700;">Done ✓</span>' : ''}
+          </div>`;
+      }).join('');
+    }
+
+    function toggleTopic(subjectName, topicName) {
+      if (!completedTopics[subjectName]) completedTopics[subjectName] = [];
+      const arr = completedTopics[subjectName];
+      const idx = arr.indexOf(topicName);
+      if (idx === -1) {
+        arr.push(topicName);
+        showToast(`✅ "${topicName}" marked as done!`, 'success', '✅', 1800);
+      } else {
+        arr.splice(idx, 1);
+        showToast(`Unmarked: "${topicName}"`, 'info', 'ℹ️', 1500);
+      }
+      Store.set('completed_topics', completedTopics);
+      const s = CLASS12_SUBJECTS.find(x => x.name === subjectName);
+      if (s) renderTopicModal(s);
+      renderAllSubjects(document.getElementById('searchInput').value);
+      updateSidebarStats();
+      // Also sync to backend
+      apiMarkTopicDone(subjectName, topicName, idx === -1).catch(() => {});
+      updateHeroStats();
+    }
+
+    function markAllDone() {
+      if (!activeModalSubject) return;
+      const s = CLASS12_SUBJECTS.find(x => x.name === activeModalSubject);
+      if (!s) return;
+      completedTopics[s.name] = [...s.topics];
+      Store.set('completed_topics', completedTopics);
+      // Sync all to backend
+      s.topics.forEach(t => apiMarkTopicDone(s.name, t, true).catch(() => {}));
+      renderTopicModal(s);
+      renderAllSubjects(document.getElementById('searchInput').value);
+      updateSidebarStats();
+      updateHeroStats();
+      showToast(`🎉 All topics in ${s.name} marked done!`, 'success', '🏆');
+    }
+
+    function quizThisSubject() {
+      if (!activeModalSubject) return;
+      window.location.href = 'quiz.html?subject=' + encodeURIComponent(activeModalSubject);
+    }
+
+    function quizSubjectDirect(name) {
+      window.location.href = 'quiz.html?subject=' + encodeURIComponent(name);
+    }
+
+    // ── Filters ───────────────────────────────
+    function setFilter(filter) {
+      activeFilter = filter;
+      document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+      document.getElementById('ft-' + filter)?.classList.add('active');
+      renderAllSubjects(document.getElementById('searchInput').value);
+    }
+
+    function filterStream(stream) {
+      if (stream === 'all') setFilter('all');
+      else setFilter(stream);
+    }
+
+    function filterSubjects() {
+      const q = document.getElementById('searchInput').value;
+      renderAllSubjects(q);
+    }
+
+    // ── URL param: pre-select subject for quiz ─
+    const urlParams = new URLSearchParams(window.location.search);
+    const subjectParam = urlParams.get('subject');
+    if (subjectParam) {
+      // Flash subject card
+      setTimeout(() => {
+        const s = CLASS12_SUBJECTS.find(x => x.name === subjectParam);
+        if (s) openSubjectModal(subjectParam);
+      }, 300);
+    }
+  </script>
+</body>
+</html>
