@@ -70,7 +70,7 @@ function loadStats() {
   document.getElementById('stat-avgScore').textContent   = avgScore + '%';
   document.getElementById('stat-attScore').textContent   = 82;
 
-  document.getElementById('overallGpa').textContent = '8.8';
+  document.getElementById('overallGpa').textContent = (avgScore / 10).toFixed(1);
   document.getElementById('totalHoursLabel').textContent = '42h';
   document.getElementById('topicsCoveredLabel').textContent = 47;
   document.getElementById('totalXp').textContent = Store.get('total_xp', 1240).toLocaleString();
@@ -370,7 +370,7 @@ function showSubjectDetail(idx) {
       </div>
       <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px;text-align:center;">
         <div style="font-weight:800;font-size:1.1rem;">${Math.floor(Math.random()*5)+1}</div>
-        <div style="font-size:0.7rem;color:var(--text-muted);">Quizzes</div>
+        <div style="font-size:0.7rem;color:var(--text-muted);">Questions</div>
       </div>
     </div>
 
